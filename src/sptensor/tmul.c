@@ -38,6 +38,7 @@ int sptSparseTensorMulTensor(sptSparseTensor *Z, sptSparseTensor * const X, sptS
 
 	sptIndex nmodes_X= X->nmodes;
 	sptIndex nmodes_Y= Y->nmodes;
+	sptIndex Y_num_fmodes = nmodes_Y - num_cmodes;
 	sptIndex nmodes_Z;
 	sptIndex ndims_buf;
 
@@ -55,13 +56,13 @@ int sptSparseTensorMulTensor(sptSparseTensor *Z, sptSparseTensor * const X, sptS
 		sptStartTimer(timer);
 			process_X(X, nmodes_X, num_cmodes, cmodes_X, tk, &fidx_X);
 			process_CooY(Y, nmodes_Y, num_cmodes, cmodes_Y, tk, &fidx_Y);
-			prepare_Z(X,Y,num_cmodes,nmodes_X,nmodes_Y,&nmodes_Z,tk,result,&ndims_buf,Z_tmp, cmodes_Y)
+			prepare_Z(X,Y,num_cmodes,nmodes_X,nmodes_Y,&nmodes_Z,tk,result,&ndims_buf,Z_tmp, cmodes_Y);
 		sptStopTimer(timer);
 		total_time += sptElapsedTime(timer);
 		printf("[Input Processing]: %.6f s\n", sptElapsedTime(timer));
 
 		sptStartTimer(timer);
-			compute_CooY_SpZ(&fidx_X, &fidx_Y, nmodes_X, nmodes_Y, num_cmodes, tk, Z_tmp, X);
+			compute_CooY_SpZ(&fidx_X, &fidx_Y, nmodes_X, nmodes_Y, num_cmodes, tk, Z_tmp, X, Y);
 			combine_Z(Z, &nmodes_Z, tk, result, &ndims_buf, Z_tmp);
 		sptStopTimer(timer);
 		total_time += sptElapsedTime(timer);
@@ -79,7 +80,7 @@ int sptSparseTensorMulTensor(sptSparseTensor *Z, sptSparseTensor * const X, sptS
 		sptStartTimer(timer);
 			process_X(X, nmodes_X, num_cmodes, cmodes_X, tk, &fidx_X);
 			process_HtY(Y, nmodes_Y, num_cmodes, cmodes_Y, tk, Y_ht, Y_cmode_inds, Y_fmode_inds);
-			prepare_Z(X,Y,num_cmodes,nmodes_X,nmodes_Y,&nmodes_Z,tk,result,&ndims_buf,Z_tmp, cmodes_Y)
+			prepare_Z(X,Y,num_cmodes,nmodes_X,nmodes_Y,&nmodes_Z,tk,result,&ndims_buf,Z_tmp, cmodes_Y);
 		sptStopTimer(timer);
 		total_time += sptElapsedTime(timer);
 		printf("[Input Processing]: %.6f s\n", sptElapsedTime(timer));
@@ -154,7 +155,7 @@ void process_CooY(sptSparseTensor * const Y, sptIndex nmodes_Y, sptIndex num_cmo
 		sptIndex * cmodes_Y, int tk, sptNnzIndexVector * fidx_Y)
 {
 	//	find mode_order
-	mode_order_Y = (sptIndex *)malloc(nmodes_Y * sizeof(sptIndex));
+	sptIndex * mode_order_Y = (sptIndex *)malloc(nmodes_Y * sizeof(sptIndex));
 	sptIndex ci = 0;
 	sptIndex fi = num_cmodes;
 	find_mode(mode_order_Y, cmodes_Y, nmodes_Y, num_cmodes, ci, fi);
@@ -180,7 +181,8 @@ void process_HtY(sptSparseTensor * const Y, sptIndex nmodes_Y, sptIndex num_cmod
 {
 	//	find mode order
 	sptIndex * mode_order_Y = (sptIndex *)malloc(nmodes_Y * sizeof(sptIndex));
-	sptIndex ci = 0, fi = num_cmodes;
+	sptIndex ci = 0;
+	sptIndex fi = num_cmodes;
 	find_mode(mode_order_Y, cmodes_Y, nmodes_Y, num_cmodes, ci, fi);
 
 	//	calculate key range for Y hashtable
@@ -247,7 +249,7 @@ void process_HtY(sptSparseTensor * const Y, sptIndex nmodes_Y, sptIndex num_cmod
  */
 void prepare_Z(sptSparseTensor * const X, sptSparseTensor * const Y,
 		sptIndex num_cmodes, sptIndex nmodes_X, sptIndex nmodes_Y, sptIndex * nmodes_Z,
-		int tk, int result, sptIndex * ndims_buf, sptSparseTensor * Z_tmp, sptIndex * cmodes_Y,)
+		int tk, int result, sptIndex * ndims_buf, sptSparseTensor * Z_tmp, sptIndex * cmodes_Y)
 {
 	//	find Y mode order
 	sptIndex * mode_order_Y = (sptIndex *)malloc(nmodes_Y * sizeof(sptIndex));
@@ -281,10 +283,10 @@ void prepare_Z(sptSparseTensor * const X, sptSparseTensor * const Y,
  * Computation via CooFormat-Y and SparseAccumulator-Z
  */
 void compute_CooY_SpZ(sptNnzIndexVector * fidx_X, sptNnzIndexVector * fidx_Y, sptIndex nmodes_X,
-		sptIndex nmodes_Y, sptIndex num_cmodes, int tk, sptSparseTensor * Z_tmp)
+		sptIndex nmodes_Y, sptIndex num_cmodes, int tk, sptSparseTensor * Z_tmp, sptSparseTensor * const X, sptSparseTensor * const Y)
 {
 #pragma omp parallel for schedule(static) num_threads(tk) shared(fidx_X, fidx_Y, nmodes_X, nmodes_Y, num_cmodes, Z_tmp)
-	for(sptNnzIndex fx_ptr = 0; fx_ptr < fidx_X->len - 1; ++fx_ptr, sptSparseTensor * const X) { // parallel on X-fibers
+	for(sptNnzIndex fx_ptr = 0; fx_ptr < fidx_X->len - 1; ++fx_ptr) { // parallel on X-fibers
 		int tid = omp_get_thread_num();
 
 		sptNnzIndex fx_begin = fidx_X->data[fx_ptr];
