@@ -491,16 +491,16 @@ void malloc_tensor(sptSparseTensor **tsr, sptIndex nmodes, const sptIndex ndims[
 void combine_Z(sptSparseTensor * Z, sptIndex nmodes_Z, int tk, sptIndex * ndims_buf, sptSparseTensor * Z_tmp)
 {
 	//	calculate total number of indices
-//	unsigned long long* Z_tmp_start = (unsigned long long*) malloc( (tk + 1) * sizeof(unsigned long long));
-//	unsigned long long Z_total_size = 0;
-//
-//	Z_tmp_start[0] = 0;
-//	for(int i = 0; i < tk; i++){
-//		Z_tmp_start[i + 1] = Z_tmp[i].nnz + Z_tmp_start[i];
-//		Z_total_size +=  Z_tmp[i].nnz;
-//	}
-//
-//	//	allocate memory for Z
+	unsigned long long* Z_tmp_start = (unsigned long long*) malloc( (tk + 1) * sizeof(unsigned long long));
+	unsigned long long Z_total_size = 0;
+
+	Z_tmp_start[0] = 0;
+	for(int i = 0; i < tk; i++){
+		Z_tmp_start[i + 1] = Z_tmp[i].nnz + Z_tmp_start[i];
+		Z_total_size +=  Z_tmp[i].nnz;
+	}
+
+	//	allocate memory for Z
 //	sptIndex c;
 //	int result;
 //	Z->nmodes = nmodes_Z;
