@@ -267,6 +267,7 @@ void prepare_Z(sptSparseTensor * const X, sptSparseTensor * const Y,
 	}
 	free(mode_order_Y);
 
+	printf("total: %u\n", nmodes_Z);
 	for (sptIndex c=0; c< nmodes_Z; ++c){
 		printf("%u\n", ndims_buf[c]);
 	}
