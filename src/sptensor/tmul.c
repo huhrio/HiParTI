@@ -87,7 +87,7 @@ int sptSparseTensorMulTensor(sptSparseTensor * Z, sptSparseTensor * const X, spt
 
 		sptStartTimer(timer);
 			compute_HtY_HtZ(&fidx_X, nmodes_X, nmodes_Y, num_cmodes, Y_fmode_inds, Y_ht, Y_cmode_inds, Z_tmp, tk, X);
-			combine_Z(Z, nmodes_Z, tk, ndims_buf, Z_tmp);
+			//combine_Z(Z, nmodes_Z, tk, ndims_buf, Z_tmp);
 		sptStopTimer(timer);
 		total_time += sptElapsedTime(timer);
 		printf("[Computation]: %.6f s\n", sptElapsedTime(timer));
