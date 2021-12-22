@@ -469,19 +469,19 @@ void compute_HtY_HtZ(sptNnzIndexVector * fidx_X, sptIndex nmodes_X, sptIndex nmo
 void malloc_tensor(sptSparseTensor **tsr, sptIndex nmodes, const sptIndex ndims[], unsigned long long size) {
     sptIndex i;
     int result;
-    *tsr->nmodes = nmodes;
-    *tsr->sortorder = malloc(nmodes * sizeof *tsr->sortorder[0]);
+    (*tsr)->nmodes = nmodes;
+    (*tsr)->sortorder = malloc(nmodes * sizeof (*tsr)->sortorder[0]);
     for(i = 0; i < nmodes; ++i) {
-        *tsr->sortorder[i] = i;
+        (*tsr)->sortorder[i] = i;
     }
-    *tsr->ndims = malloc(nmodes * sizeof **tsr->ndims);
-    memcpy(*tsr->ndims, ndims, nmodes * sizeof **tsr->ndims);
-    *tsr->nnz = size;
-    *tsr->inds = malloc(nmodes * sizeof **tsr->inds);
+    (*tsr)->ndims = malloc(nmodes * sizeof *(*tsr)->ndims);
+    memcpy((*tsr)->ndims, ndims, nmodes * sizeof *(*tsr)->ndims);
+    (*tsr)->nnz = size;
+    (*tsr)->inds = malloc(nmodes * sizeof *(*tsr)->inds);
     for(i = 0; i < nmodes; ++i) {
-        result = sptNewIndexVector(&*tsr->inds[i], size, size);
+        result = sptNewIndexVector(&(*tsr)->inds[i], size, size);
     }
-    result = sptNewValueVector(&*tsr->values, size, size);
+    result = sptNewValueVector(&(*tsr)->values, size, size);
     return;
 }
 
