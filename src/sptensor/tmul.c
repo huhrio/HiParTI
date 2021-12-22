@@ -267,6 +267,10 @@ void prepare_Z(sptSparseTensor * const X, sptSparseTensor * const Y,
 	}
 	free(mode_order_Y);
 
+	for (sptIndex c=0; c< nmodes_Z; ++c){
+		printf("%u\n", ndims_buf[c]);
+	}
+
 	int result;
 	//	allocate a local Z_tmp for each thread
 	for (int i = 0; i < tk; i++){
@@ -478,10 +482,6 @@ void combine_Z(sptSparseTensor * Z, sptIndex nmodes_Z, int tk, sptIndex * ndims_
 		Z_total_size +=  Z_tmp[i].nnz;
 	}
 	int result = sptNewSparseTensorWithSize(Z, nmodes_Z, *ndims_buf, Z_total_size);
-
-	for (sptIndex c=0; c< nmodes_Z; ++c){
-		printf("%u\n", ndims_buf[c]);
-	}
 
 #pragma omp parallel for schedule(static) num_threads(tk) shared(Z, nmodes_Z, Z_tmp_start, Z_tmp)
 	for(int i = 0; i < tk; i++){ // parallel on each Z-tmp
