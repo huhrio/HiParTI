@@ -468,11 +468,6 @@ void compute_HtY_HtZ(sptNnzIndexVector * fidx_X, sptIndex nmodes_X, sptIndex nmo
  */
 void combine_Z(sptSparseTensor * Z, sptIndex nmodes_Z, int tk, sptIndex * ndims_buf, sptSparseTensor * Z_tmp)
 {
-	printf("total: %u\n", nmodes_Z);
-	for (sptIndex c=0; c< nmodes_Z; ++c){
-		printf("%u\n", ndims_buf[c]);
-	}
-
 	//	calculate total number of indices
 	unsigned long long* Z_tmp_start = (unsigned long long*) malloc( (tk + 1) * sizeof(unsigned long long));
 	unsigned long long Z_total_size = 0;
@@ -484,6 +479,7 @@ void combine_Z(sptSparseTensor * Z, sptIndex nmodes_Z, int tk, sptIndex * ndims_
 	}
 	int result = sptNewSparseTensorWithSize(Z, nmodes_Z, *ndims_buf, Z_total_size);
 
+	print("%d\n", result);
 #pragma omp parallel for schedule(static) num_threads(tk) shared(Z, nmodes_Z, Z_tmp_start, Z_tmp)
 	for(int i = 0; i < tk; i++){ // parallel on each Z-tmp
 		int tid = omp_get_thread_num();
