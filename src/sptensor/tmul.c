@@ -5,105 +5,6 @@
 #include <limits.h>
 #include <numa.h>
 
-/** All combined:
- * 0: COOY + SPA
- * 1: COOY + HTA
- * 2: HTY + SPA
- * 3: HTY + HTA
- * 4: HTY + HTA on HM
- **/
-int sptSparseTensorMulTensor(sptSparseTensor * Z, sptSparseTensor * const X, sptSparseTensor *const Y, sptIndex num_cmodes, sptIndex * cmodes_X, sptIndex * cmodes_Y, int tk, int output_sorting, int placement)
-{
-	//	Experiment modes
-	int experiment_modes;
-	sscanf(getenv("EXPERIMENT_MODES"), "%d", &experiment_modes);
-
-	//	Setup timer
-	double total_time = 0;
-	sptTimer timer;
-	sptNewTimer(&timer, 0);
-
-	//	Check inputs
-	if(num_cmodes >= X->nmodes) {
-		spt_CheckError(SPTERR_SHAPE_MISMATCH, "CPU  SpTns * SpTns", "shape mismatch");
-	}
-	for(sptIndex m = 0; m < num_cmodes; ++m) {
-		if(X->ndims[cmodes_X[m]] != Y->ndims[cmodes_Y[m]]) {
-			spt_CheckError(SPTERR_SHAPE_MISMATCH, "CPU  SpTns * SpTns", "shape mismatch");
-		}
-	}
-
-	//	Initialize variables
-	sptIndex nmodes_X= X->nmodes;
-	sptIndex nmodes_Y= Y->nmodes;
-	sptIndex nmodes_Z= nmodes_X + nmodes_Y - 2 * num_cmodes;
-
-	sptNnzIndexVector fidx_X;
-	sptNnzIndexVector fidx_Y;					// CooY 0.1
-	table_t* Y_ht= tensor_htCreate(Y->nnz);		// HtY	2.3.4
-
-	sptSparseTensor* Z_tmp= (sptSparseTensor*)malloc(tk * sizeof (sptSparseTensor));
-	sptIndex* ndims_buf= (sptIndex*)malloc(nmodes_Z * sizeof(sptIndex));
-
-	sptIndex* Y_cmode_inds= (sptIndex*)malloc((num_cmodes + 1) * sizeof(sptIndex));
-	sptIndex* Y_fmode_inds= (sptIndex*)malloc((nmodes_Y - num_cmodes + 1) * sizeof(sptIndex));
-
-	//	Start Experiment
-		//	0: COOY + SPA
-	if(experiment_modes == 0){
-		sptStartTimer(timer);
-			process_X(X, nmodes_X, num_cmodes, cmodes_X, tk, &fidx_X);
-			process_CooY(Y, nmodes_Y, num_cmodes, cmodes_Y, tk, &fidx_Y);
-			prepare_Z(X, Y, num_cmodes, nmodes_X, nmodes_Y, nmodes_Z, tk, ndims_buf, Z_tmp, cmodes_Y);
-		sptStopTimer(timer);
-		total_time += sptElapsedTime(timer);
-		printf("[Processing Input]: %.6f s\n", sptElapsedTime(timer));
-
-		sptStartTimer(timer);
-			compute_CooY_SpZ(&fidx_X, &fidx_Y, nmodes_X, nmodes_Y, num_cmodes, tk, Z_tmp, X, Y);
-			combine_Z(Z, nmodes_Z, tk, ndims_buf, Z_tmp);
-		sptStopTimer(timer);
-		total_time += sptElapsedTime(timer);
-		printf("[Computation]: %.6f s\n", sptElapsedTime(timer));
-
-		sptStartTimer(timer);
-			sptSparseTensorSortIndex(Z, 1, tk);
-		sptStopTimer(timer);
-		total_time += sptElapsedTime(timer);
-		printf("[Processing Output]: %.6f s\n", sptElapsedTime(timer));
-
-		printf("[Total time]: %.6f s\n", total_time);
-	}
-
-		//	3: HTY + HTA
-	if(experiment_modes == 3){
-		sptStartTimer(timer);
-			process_X(X, nmodes_X, num_cmodes, cmodes_X, tk, &fidx_X);
-			process_HtY(Y, nmodes_Y, num_cmodes, cmodes_Y, tk, Y_ht, Y_cmode_inds, Y_fmode_inds);
-			prepare_Z(X, Y, num_cmodes, nmodes_X, nmodes_Y, nmodes_Z, tk, ndims_buf, Z_tmp, cmodes_Y);
-		sptStopTimer(timer);
-		total_time += sptElapsedTime(timer);
-		printf("[Processing Input]: %.6f s\n", sptElapsedTime(timer));
-
-		sptStartTimer(timer);
-			compute_HtY_HtZ(&fidx_X, nmodes_X, nmodes_Y, num_cmodes, Y_fmode_inds, Y_ht, Y_cmode_inds, Z_tmp, tk, X);
-			//combine_Z(Z, nmodes_Z, tk, ndims_buf, Z_tmp);
-		sptStopTimer(timer);
-		total_time += sptElapsedTime(timer);
-		printf("[Computation]: %.6f s\n", sptElapsedTime(timer));
-
-		sptStartTimer(timer);
-			sptSparseTensorSortIndex(Z, 1, tk);
-		sptStopTimer(timer);
-		total_time += sptElapsedTime(timer);
-		printf("[Processing Output]: %.6f s\n", sptElapsedTime(timer));
-
-		printf("[Total time]: %.6f s\n", total_time);
-	}
-
-	return 0;
-}
-
 /**
  * Find mode_order for X,Y
  */
@@ -492,4 +393,103 @@ void combine_Z(sptSparseTensor * Z, sptIndex nmodes_Z, int tk, sptIndex * ndims_
 	}
 
 	return;
+}
+
+/** All combined:
+ * 0: COOY + SPA
+ * 1: COOY + HTA
+ * 2: HTY + SPA
+ * 3: HTY + HTA
+ * 4: HTY + HTA on HM
+ **/
+int sptSparseTensorMulTensor(sptSparseTensor * Z, sptSparseTensor * const X, sptSparseTensor *const Y, sptIndex num_cmodes, sptIndex * cmodes_X, sptIndex * cmodes_Y, int tk, int output_sorting, int placement)
+{
+	//	Experiment modes
+	int experiment_modes;
+	sscanf(getenv("EXPERIMENT_MODES"), "%d", &experiment_modes);
+
+	//	Setup timer
+	double total_time = 0;
+	sptTimer timer;
+	sptNewTimer(&timer, 0);
+
+	//	Check inputs
+	if(num_cmodes >= X->nmodes) {
+		spt_CheckError(SPTERR_SHAPE_MISMATCH, "CPU  SpTns * SpTns", "shape mismatch");
+	}
+	for(sptIndex m = 0; m < num_cmodes; ++m) {
+		if(X->ndims[cmodes_X[m]] != Y->ndims[cmodes_Y[m]]) {
+			spt_CheckError(SPTERR_SHAPE_MISMATCH, "CPU  SpTns * SpTns", "shape mismatch");
+		}
+	}
+
+	//	Initialize variables
+	sptIndex nmodes_X= X->nmodes;
+	sptIndex nmodes_Y= Y->nmodes;
+	sptIndex nmodes_Z= nmodes_X + nmodes_Y - 2 * num_cmodes;
+
+	sptNnzIndexVector fidx_X;
+	sptNnzIndexVector fidx_Y;					// CooY 0.1
+	table_t* Y_ht= tensor_htCreate(Y->nnz);		// HtY	2.3.4
+
+	sptSparseTensor* Z_tmp= (sptSparseTensor*)malloc(tk * sizeof (sptSparseTensor));
+	sptIndex* ndims_buf= (sptIndex*)malloc(nmodes_Z * sizeof(sptIndex));
+
+	sptIndex* Y_cmode_inds= (sptIndex*)malloc((num_cmodes + 1) * sizeof(sptIndex));
+	sptIndex* Y_fmode_inds= (sptIndex*)malloc((nmodes_Y - num_cmodes + 1) * sizeof(sptIndex));
+
+	//	Start Experiment
+		//	0: COOY + SPA
+	if(experiment_modes == 0){
+		sptStartTimer(timer);
+			process_X(X, nmodes_X, num_cmodes, cmodes_X, tk, &fidx_X);
+			process_CooY(Y, nmodes_Y, num_cmodes, cmodes_Y, tk, &fidx_Y);
+			prepare_Z(X, Y, num_cmodes, nmodes_X, nmodes_Y, nmodes_Z, tk, ndims_buf, Z_tmp, cmodes_Y);
+		sptStopTimer(timer);
+		total_time += sptElapsedTime(timer);
+		printf("[Processing Input]: %.6f s\n", sptElapsedTime(timer));
+
+		sptStartTimer(timer);
+			compute_CooY_SpZ(&fidx_X, &fidx_Y, nmodes_X, nmodes_Y, num_cmodes, tk, Z_tmp, X, Y);
+			combine_Z(Z, nmodes_Z, tk, ndims_buf, Z_tmp);
+		sptStopTimer(timer);
+		total_time += sptElapsedTime(timer);
+		printf("[Computation]: %.6f s\n", sptElapsedTime(timer));
+
+		sptStartTimer(timer);
+			sptSparseTensorSortIndex(Z, 1, tk);
+		sptStopTimer(timer);
+		total_time += sptElapsedTime(timer);
+		printf("[Processing Output]: %.6f s\n", sptElapsedTime(timer));
+
+		printf("[Total time]: %.6f s\n", total_time);
+	}
+
+		//	3: HTY + HTA
+	if(experiment_modes == 3){
+		sptStartTimer(timer);
+			process_X(X, nmodes_X, num_cmodes, cmodes_X, tk, &fidx_X);
+			process_HtY(Y, nmodes_Y, num_cmodes, cmodes_Y, tk, Y_ht, Y_cmode_inds, Y_fmode_inds);
+			prepare_Z(X, Y, num_cmodes, nmodes_X, nmodes_Y, nmodes_Z, tk, ndims_buf, Z_tmp, cmodes_Y);
+		sptStopTimer(timer);
+		total_time += sptElapsedTime(timer);
+		printf("[Processing Input]: %.6f s\n", sptElapsedTime(timer));
+
+		sptStartTimer(timer);
+			compute_HtY_HtZ(&fidx_X, nmodes_X, nmodes_Y, num_cmodes, Y_fmode_inds, Y_ht, Y_cmode_inds, Z_tmp, tk, X);
+			//combine_Z(Z, nmodes_Z, tk, ndims_buf, Z_tmp);
+		sptStopTimer(timer);
+		total_time += sptElapsedTime(timer);
+		printf("[Computation]: %.6f s\n", sptElapsedTime(timer));
+
+		sptStartTimer(timer);
+			sptSparseTensorSortIndex(Z, 1, tk);
+		sptStopTimer(timer);
+		total_time += sptElapsedTime(timer);
+		printf("[Processing Output]: %.6f s\n", sptElapsedTime(timer));
+
+		printf("[Total time]: %.6f s\n", total_time);
+	}
+
+	return 0;
 }
