@@ -464,28 +464,6 @@ void compute_HtY_HtZ(sptNnzIndexVector * fidx_X, sptIndex nmodes_X, sptIndex nmo
 }
 
 /**
- * allocate memory for tensor
- */
-void malloc_tensor(sptSparseTensor **tsr, sptIndex nmodes, const sptIndex ndims[], unsigned long long size) {
-    sptIndex i;
-    int result;
-    (*tsr)->nmodes = nmodes;
-    (*tsr)->sortorder = malloc(nmodes * sizeof (*tsr)->sortorder[0]);
-    for(i = 0; i < nmodes; ++i) {
-        (*tsr)->sortorder[i] = i;
-    }
-    (*tsr)->ndims = malloc(nmodes * sizeof *(*tsr)->ndims);
-    memcpy((*tsr)->ndims, ndims, nmodes * sizeof *(*tsr)->ndims);
-    (*tsr)->nnz = size;
-    (*tsr)->inds = malloc(nmodes * sizeof *(*tsr)->inds);
-    for(i = 0; i < nmodes; ++i) {
-        result = sptNewIndexVector(&(*tsr)->inds[i], size, size);
-    }
-    result = sptNewValueVector(&(*tsr)->values, size, size);
-    return;
-}
-
-/**
  * Combine Z-tmp's to Z
  */
 void combine_Z(sptSparseTensor * Z, sptIndex nmodes_Z, int tk, sptIndex * ndims_buf, sptSparseTensor * Z_tmp)
@@ -501,23 +479,22 @@ void combine_Z(sptSparseTensor * Z, sptIndex nmodes_Z, int tk, sptIndex * ndims_
 	}
 
 	//	allocate memory for Z
-//	sptIndex c;
-//	int result;
-//	Z->nmodes = nmodes_Z;
-//	Z->sortorder = malloc(nmodes_Z * sizeof Z->sortorder[0]);
-//	for(c = 0; c < nmodes_Z; ++c) {
-//		Z->sortorder[c] = c;
-//	}
-//	Z->ndims = malloc(nmodes_Z * sizeof *Z->ndims);
-//	memcpy(Z->ndims, ndims_buf, nmodes_Z * sizeof *Z->ndims);
-//	Z->nnz = Z_total_size;
-//	Z->inds = malloc(nmodes_Z * sizeof *Z->inds);
-//	for(c = 0; c < nmodes_Z; ++c) {
-//		result = sptNewIndexVector(&Z->inds[c], Z_total_size, Z_total_size);
-//	}
-//	result = sptNewValueVector(&Z->values, Z_total_size, Z_total_size);
-
-	malloc_tensor(&Z, nmodes_Z, *ndims_buf, Z_total_size);
+//	int result= sptNewSparseTensorWithSize(&Z, nmodes_Z, *ndims_buf, Z_total_size);
+		int result;
+		Z->nmodes = nmodes_Z;
+		Z->sortorder = malloc(nmodes_Z * sizeof Z->sortorder[0]);
+		sptIndex c;
+		for(c = 0; c < nmodes_Z; ++c) {
+			Z->sortorder[c] = c;
+		}
+		Z->ndims = malloc(nmodes_Z * sizeof *Z->ndims);
+		memcpy(Z->ndims, ndims_buf, nmodes_Z * sizeof *Z->ndims);
+		Z->nnz = Z_total_size;
+		Z->inds = malloc(nmodes_Z * sizeof *Z->inds);
+		for(c = 0; c < nmodes_Z; ++c) {
+			result = sptNewIndexVector(&Z->inds[c], Z_total_size, Z_total_size);
+		}
+		result = sptNewValueVector(&Z->values, Z_total_size, Z_total_size);
 
 #pragma omp parallel for schedule(static) num_threads(tk) shared(Z, nmodes_Z, Z_tmp_start, Z_tmp)
 	for(int i = 0; i < tk; i++){ // parallel on each Z-tmp
