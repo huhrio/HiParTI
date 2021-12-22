@@ -463,6 +463,29 @@ void compute_HtY_HtZ(sptNnzIndexVector * fidx_X, sptIndex nmodes_X, sptIndex nmo
 	return;
 }
 
+int helper(sptSparseTensor *tsr, sptIndex nmodes, const sptIndex ndims[], unsigned long long size) {
+    sptIndex i;
+    int result;
+    tsr->nmodes = nmodes;
+    tsr->sortorder = malloc(nmodes * sizeof tsr->sortorder[0]);
+    for(i = 0; i < nmodes; ++i) {
+        tsr->sortorder[i] = i;
+    }
+    tsr->ndims = malloc(nmodes * sizeof *tsr->ndims);
+    //spt_CheckOSError(!tsr->ndims, "SpTns New");
+    memcpy(tsr->ndims, ndims, nmodes * sizeof *tsr->ndims);
+    tsr->nnz = size;
+    tsr->inds = malloc(nmodes * sizeof *tsr->inds);
+    //spt_CheckOSError(!tsr->inds, "SpTns New");
+    for(i = 0; i < nmodes; ++i) {
+        result = sptNewIndexVector(&tsr->inds[i], size, size);
+        //spt_CheckError(result, "SpTns New", NULL);
+    }
+    result = sptNewValueVector(&tsr->values, size, size);
+    //spt_CheckError(result, "SpTns New", NULL);
+    return 0;
+}
+
 /**
  * Combine Z-tmp's to Z
  */
@@ -480,7 +503,7 @@ void combine_Z(sptSparseTensor * Z, sptIndex nmodes_Z, int tk, sptIndex * ndims_
 
 	printf("stop here \n");
 
-	int result = sptNewSparseTensorWithSize(Z, nmodes_Z, *ndims_buf, Z_total_size);
+	int result = helper(Z, nmodes_Z, *ndims_buf, Z_total_size);
 
 	printf("stop here \n");
 
