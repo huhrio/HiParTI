@@ -483,15 +483,15 @@ void combine_Z(sptSparseTensor * Z, sptIndex nmodes_Z, int tk, sptIndex * ndims_
 	//int result = sptNewSparseTensorWithSize(Z, nmodes_Z, *ndims_buf, Z_total_size);
 		sptIndex c;
 		int result;
-	    Z->nmodes_Z = nmodes_Z;
-	    Z->sortorder = malloc(nmodes_Z * Z_total_sizeof Z->sortorder[0]);
+	    Z->nmodes = nmodes_Z;
+	    Z->sortorder = malloc(nmodes_Z * sizeof Z->sortorder[0]);
 	    for(c = 0; c < nmodes_Z; ++c) {
 	        Z->sortorder[c] = c;
 	    }
-	    Z->ndims_buf = malloc(nmodes_Z * Z_total_sizeof *Z->ndims_buf);
-	    memcpy(Z->ndims_buf, ndims_buf, nmodes_Z * Z_total_sizeof *Z->ndims_buf);
+	    Z->ndims = malloc(nmodes_Z * sizeof *Z->ndims);
+	    memcpy(Z->ndims, ndims_buf, nmodes_Z * sizeof *Z->ndims);
 	    Z->nnz = Z_total_size;
-	    Z->inds = malloc(nmodes_Z * Z_total_sizeof *Z->inds);
+	    Z->inds = malloc(nmodes_Z * sizeof *Z->inds);
 	    for(c = 0; c < nmodes_Z; ++c) {
 	        result = sptNewIndexVector(&Z->inds[c], Z_total_size, Z_total_size);
 	    }
