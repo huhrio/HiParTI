@@ -477,9 +477,13 @@ void combine_Z(sptSparseTensor * Z, sptIndex nmodes_Z, int tk, sptIndex * ndims_
 		Z_tmp_start[i + 1] = Z_tmp[i].nnz + Z_tmp_start[i];
 		Z_total_size +=  Z_tmp[i].nnz;
 	}
+
+	print("stop here \n");
+
 	int result = sptNewSparseTensorWithSize(Z, nmodes_Z, *ndims_buf, Z_total_size);
 
-	print("%d\n", result);
+	print("stop here \n");
+
 #pragma omp parallel for schedule(static) num_threads(tk) shared(Z, nmodes_Z, Z_tmp_start, Z_tmp)
 	for(int i = 0; i < tk; i++){ // parallel on each Z-tmp
 		int tid = omp_get_thread_num();
