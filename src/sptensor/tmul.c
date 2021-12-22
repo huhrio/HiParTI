@@ -57,11 +57,11 @@ int sptSparseTensorMulTensor(sptSparseTensor * Z, sptSparseTensor * const X, spt
 			prepare_Z(X, Y, num_cmodes, nmodes_X, nmodes_Y, nmodes_Z, tk, ndims_buf, Z_tmp, cmodes_Y);
 		sptStopTimer(timer);
 		total_time += sptElapsedTime(timer);
-		printf("[Input Processing]: %.6f s\n", sptElapsedTime(timer));
+		printf("[Processing Input]: %.6f s\n", sptElapsedTime(timer));
 
 		sptStartTimer(timer);
 			compute_CooY_SpZ(&fidx_X, &fidx_Y, nmodes_X, nmodes_Y, num_cmodes, tk, Z_tmp, X, Y);
-			//combine_Z(Z, nmodes_Z, tk, ndims_buf, Z_tmp);
+			combine_Z(Z, nmodes_Z, tk, ndims_buf, Z_tmp);
 		sptStopTimer(timer);
 		total_time += sptElapsedTime(timer);
 		printf("[Computation]: %.6f s\n", sptElapsedTime(timer));
@@ -70,7 +70,7 @@ int sptSparseTensorMulTensor(sptSparseTensor * Z, sptSparseTensor * const X, spt
 			sptSparseTensorSortIndex(Z, 1, tk);
 		sptStopTimer(timer);
 		total_time += sptElapsedTime(timer);
-		printf("[Output Processing]: %.6f s\n", sptElapsedTime(timer));
+		printf("[Processing Output]: %.6f s\n", sptElapsedTime(timer));
 
 		printf("[Total time]: %.6f s\n", total_time);
 	}
@@ -83,7 +83,7 @@ int sptSparseTensorMulTensor(sptSparseTensor * Z, sptSparseTensor * const X, spt
 			prepare_Z(X, Y, num_cmodes, nmodes_X, nmodes_Y, nmodes_Z, tk, ndims_buf, Z_tmp, cmodes_Y);
 		sptStopTimer(timer);
 		total_time += sptElapsedTime(timer);
-		printf("[Input Processing]: %.6f s\n", sptElapsedTime(timer));
+		printf("[Processing Input]: %.6f s\n", sptElapsedTime(timer));
 
 		sptStartTimer(timer);
 			compute_HtY_HtZ(&fidx_X, nmodes_X, nmodes_Y, num_cmodes, Y_fmode_inds, Y_ht, Y_cmode_inds, Z_tmp, tk, X);
@@ -96,7 +96,7 @@ int sptSparseTensorMulTensor(sptSparseTensor * Z, sptSparseTensor * const X, spt
 			sptSparseTensorSortIndex(Z, 1, tk);
 		sptStopTimer(timer);
 		total_time += sptElapsedTime(timer);
-		printf("[Output Processing]: %.6f s\n", sptElapsedTime(timer));
+		printf("[Processing Output]: %.6f s\n", sptElapsedTime(timer));
 
 		printf("[Total time]: %.6f s\n", total_time);
 	}
