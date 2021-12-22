@@ -87,7 +87,7 @@ int sptSparseTensorMulTensor(sptSparseTensor * Z, sptSparseTensor * const X, spt
 
 		sptStartTimer(timer);
 			compute_HtY_HtZ(&fidx_X, nmodes_X, nmodes_Y, num_cmodes, Y_fmode_inds, Y_ht, Y_cmode_inds, Z_tmp, tk, X);
-			//combine_Z(Z, nmodes_Z, tk, ndims_buf, Z_tmp);
+			combine_Z(Z, nmodes_Z, tk, ndims_buf, Z_tmp);
 		sptStopTimer(timer);
 		total_time += sptElapsedTime(timer);
 		printf("[Computation]: %.6f s\n", sptElapsedTime(timer));
@@ -477,6 +477,7 @@ void combine_Z(sptSparseTensor * Z, sptIndex nmodes_Z, int tk, sptIndex * ndims_
 		Z_tmp_start[i + 1] = Z_tmp[i].nnz + Z_tmp_start[i];
 		Z_total_size +=  Z_tmp[i].nnz;
 	}
+	printf("%llu\n", Z_total_size);
 	int result = sptNewSparseTensorWithSize(Z, nmodes_Z, *ndims_buf, Z_total_size);
 
 #pragma omp parallel for schedule(static) num_threads(tk) shared(Z, nmodes_Z, Z_tmp_start)
