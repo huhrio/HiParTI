@@ -265,7 +265,6 @@ void prepare_Z(sptSparseTensor * const X, sptSparseTensor * const Y,
 	for(sptIndex m = num_cmodes; m < nmodes_Y; ++m) {
 		ndims_buf[(m - num_cmodes) + nmodes_X - num_cmodes] = Y->ndims[mode_order_Y[m]];
 	}
-	free(mode_order_Y);
 
 	int result;
 	//	allocate a local Z_tmp for each thread

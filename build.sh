@@ -20,6 +20,6 @@ cd build
 
 cmake "${CMAKE_FLAGS[@]}" .. 
 
-make CFLAGS=' -lnuma '
+make
 
 echo "Finished. Check the 'build' directory for results."
