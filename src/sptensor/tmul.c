@@ -292,6 +292,7 @@ void compute_CooY_SpZ(sptNnzIndexVector * fidx_X, sptNnzIndexVector * fidx_Y, sp
 
 			sptNnzIndex fx_begin = fidx_X->data[fx_ptr];
 			sptNnzIndex fx_end = fidx_X->data[fx_ptr+1];
+			sptFreeNnzIndexVector(fidx_X);
 
 			//	allocate buffers to read from CooY
 			sptIndex nmodes_spa = nmodes_Y - num_cmodes;
@@ -333,6 +334,8 @@ void compute_CooY_SpZ(sptNnzIndexVector * fidx_X, sptNnzIndexVector * fidx_Y, sp
 					if (fy_begin != -1 || fy_end != -1)
 						break;
 				}
+				sptFreeNnzIndexVector(fidx_Y);
+				sptFreeIndexVector(cmode_index_X);
 
 				//	if no Y-fiber is found, skip to next X-non_zero
 				if (fy_begin == -1 || fy_end == -1)
@@ -394,6 +397,7 @@ void compute_HtY_HtZ(sptNnzIndexVector * fidx_X, sptIndex nmodes_X, sptIndex nmo
 
 			sptNnzIndex fx_begin = fidx_X->data[fx_ptr];
 			sptNnzIndex fx_end = fidx_X->data[fx_ptr+1];
+			sptFreeNnzIndexVector(fidx_X);
 
 			//	allocate hashtable to store intermediate result
 			const unsigned int ht_size = 10000;
@@ -420,6 +424,8 @@ void compute_HtY_HtZ(sptNnzIndexVector * fidx_X, sptIndex nmodes_X, sptIndex nmo
 				for(sptIndex m = 0; m < num_cmodes; ++m)
 					key_cmodes += cmode_index_X.data[m] * Y_cmode_inds[m + 1];
 
+				sptFreeIndexVector(cmode_index_X);
+				
 				tensor_value Y_val = tensor_htGet(Y_ht, key_cmodes);
 				unsigned int my_len = Y_val.len;
 
@@ -518,5 +524,6 @@ void combine_Z(sptSparseTensor * Z, sptIndex nmodes_Z, int tk, sptIndex * ndims_
 
 	free(Z_tmp);
 	free(ndims_buf);
+	free(Z_tmp_start);
 	return;
 }
