@@ -80,14 +80,14 @@ int sptSparseTensorMulTensor(sptSparseTensor * Z, sptSparseTensor * const X, spt
 	if(experiment_modes == 3){
 		sptStartTimer(timer);
 			process_X(X, nmodes_X, num_cmodes, cmodes_X, tk, &fidx_X);
-			process_HtY(Y, nmodes_Y, num_cmodes, cmodes_Y, tk, Y_ht, Y_cmode_inds, Y_fmode_inds);
+			process_HtY(Y, nmodes_Y, num_cmodes, cmodes_Y, tk, &Y_ht, Y_cmode_inds, Y_fmode_inds);
 			prepare_Z(X, Y, num_cmodes, nmodes_X, nmodes_Y, nmodes_Z, tk, ndims_buf, Z_tmp, cmodes_Y);
 		sptStopTimer(timer);
 		total_time += sptElapsedTime(timer);
 		printf("[Processing Input]: %.6f s\n", sptElapsedTime(timer));
 
 		sptStartTimer(timer);
-			compute_HtY_HtZ(&fidx_X, nmodes_X, nmodes_Y, num_cmodes, Y_fmode_inds, Y_ht, Y_cmode_inds, Z_tmp, tk, X);
+			compute_HtY_HtZ(&fidx_X, nmodes_X, nmodes_Y, num_cmodes, Y_fmode_inds, &Y_ht, Y_cmode_inds, Z_tmp, tk, X);
 			combine_Z(Z, nmodes_Z, tk, ndims_buf, Z_tmp);
 		sptStopTimer(timer);
 		total_time += sptElapsedTime(timer);
@@ -401,8 +401,8 @@ void compute_HtY_HtZ(sptNnzIndexVector * fidx_X, sptIndex nmodes_X, sptIndex nmo
 
 			//	allocate hashtable to store intermediate result
 			const unsigned int ht_size = 10000;
-			table_t *ht;
-			ht = htCreate(ht_size);
+			table_t ht;
+			htCreate(&ht, ht_size);
 
 			sptIndex nmodes_spa = nmodes_Y - num_cmodes;
 			long int nnz_counter = 0;
