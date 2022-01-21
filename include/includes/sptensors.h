@@ -341,6 +341,27 @@ int sptTTMHiCOO_MatrixTiling(
 /// Binary search
 sptNnzIndex sptBinarySearch(sptIndex *array, int arrayStart, int arrayEnd, sptIndex target);
 
+
+/// Hash table for SPA
+typedef struct{
+    unsigned long long key;
+    sptValue val;
+    struct node_t *next;
+}node_t;
+
+typedef struct{
+    int size;
+    node_t **list;
+}table_t;
+
+table_t *htCreate(const unsigned int size);
+unsigned int htHashCode(unsigned long long key);
+void htUpdate( table_t *t, unsigned long long key, sptValue val);
+void htInsert( table_t *t, unsigned long long key, sptValue val);
+sptValue htGet( table_t *t,unsigned long long key);
+void htFree( table_t *t);
+
+
 /// Hash table for the second tensor
 typedef struct {
     unsigned int    len;        /// length
@@ -357,14 +378,14 @@ typedef struct{
 
 typedef struct{
     int size;
-    tensor_node_t **list;
+     tensor_node_t **list;
 }tensor_table_t;
 
 int tensor_htNewValueVector(tensor_value *vec, unsigned int len, unsigned int cap);
 int tensor_htAppendValueVector(tensor_value *vec, unsigned long long key_FM, sptValue val);
 void tensor_htFreeValueVector(tensor_value *vec);
 
-int tensor_htCreate(tensor_table_t *t, const unsigned int size);
+tensor_table_t *tensor_htCreate(const unsigned int size);
 unsigned int tensor_htHashCode(unsigned long long key);
 void tensor_htUpdate( tensor_table_t *t, unsigned long long key_cmodes, unsigned long long key_fmodes, sptValue value);
 void tensor_htInsert( tensor_table_t *t, unsigned long long key_cmodes, unsigned long long key_fmodes, sptValue value);
