@@ -1759,13 +1759,12 @@ void htFree( table_t *t){
     while(temp){
         tmp= temp;
         temp= temp->next;
-        tmp->key= 0;
-        tmp->val= 0;
         free(tmp->next);
+        free(tmp);
     }
     
-    t->size= 0;
     free(t->list);
+    free(t);
 }
 
 unsigned int tensor_ht_size;
