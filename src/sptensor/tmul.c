@@ -500,6 +500,7 @@ void combine_Z(sptSparseTensor * Z, sptIndex nmodes_Z, int tk, sptIndex * ndims_
 		}
 		Z->ndims = malloc(nmodes_Z * sizeof *Z->ndims);
 		memcpy(Z->ndims, ndims_buf, nmodes_Z * sizeof *Z->ndims);
+		free(ndims_buf);
 		Z->nnz = Z_total_size;
 		Z->inds = malloc(nmodes_Z * sizeof *Z->inds);
 		for(c = 0; c < nmodes_Z; ++c) {
@@ -521,8 +522,6 @@ void combine_Z(sptSparseTensor * Z, sptIndex nmodes_Z, int tk, sptIndex * ndims_
 			sptFreeSparseTensor(&Z_tmp[tid]);
 		}
 
-	free(Z_tmp);
-	free(ndims_buf);
 	free(Z_tmp_start);
 	return;
 }
