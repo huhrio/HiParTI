@@ -292,7 +292,6 @@ void compute_CooY_SpZ(sptNnzIndexVector * fidx_X, sptNnzIndexVector * fidx_Y, sp
 
 			sptNnzIndex fx_begin = fidx_X->data[fx_ptr];
 			sptNnzIndex fx_end = fidx_X->data[fx_ptr+1];
-			sptFreeNnzIndexVector(fidx_X);
 
 			//	allocate buffers to read from CooY
 			sptIndex nmodes_spa = nmodes_Y - num_cmodes;
@@ -379,6 +378,8 @@ void compute_CooY_SpZ(sptNnzIndexVector * fidx_X, sptNnzIndexVector * fidx_Y, sp
 			sptFreeValueVector(&spa_vals);
 		}
 
+	sptFreeNnzIndexVector(fidx_X);
+	sptFreeNnzIndexVector(fidx_Y);
 	free(Y_cmode_inds);
 	free(Y_fmode_inds);
 	return;
@@ -396,7 +397,6 @@ void compute_HtY_HtZ(sptNnzIndexVector * fidx_X, sptIndex nmodes_X, sptIndex nmo
 
 			sptNnzIndex fx_begin = fidx_X->data[fx_ptr];
 			sptNnzIndex fx_end = fidx_X->data[fx_ptr+1];
-			sptFreeNnzIndexVector(fidx_X);
 
 			//	allocate hashtable to store intermediate result
 			const unsigned int ht_size = 10000;
@@ -468,6 +468,7 @@ void compute_HtY_HtZ(sptNnzIndexVector * fidx_X, sptIndex nmodes_X, sptIndex nmo
 			htFree(ht);
 		}
 
+	sptFreeNnzIndexVector(fidx_X);
 	free(Y_cmode_inds);
 	free(Y_fmode_inds);
 	htFree(Y_ht);
