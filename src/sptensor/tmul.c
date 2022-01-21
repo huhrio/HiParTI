@@ -335,7 +335,7 @@ void compute_CooY_SpZ(sptNnzIndexVector * fidx_X, sptNnzIndexVector * fidx_Y, sp
 						break;
 				}
 				sptFreeNnzIndexVector(fidx_Y);
-				sptFreeIndexVector(cmode_index_X);
+				sptFreeIndexVector(&cmode_index_X);
 
 				//	if no Y-fiber is found, skip to next X-non_zero
 				if (fy_begin == -1 || fy_end == -1)
@@ -424,8 +424,8 @@ void compute_HtY_HtZ(sptNnzIndexVector * fidx_X, sptIndex nmodes_X, sptIndex nmo
 				for(sptIndex m = 0; m < num_cmodes; ++m)
 					key_cmodes += cmode_index_X.data[m] * Y_cmode_inds[m + 1];
 
-				sptFreeIndexVector(cmode_index_X);
-				
+				sptFreeIndexVector(&cmode_index_X);
+
 				tensor_value Y_val = tensor_htGet(Y_ht, key_cmodes);
 				unsigned int my_len = Y_val.len;
 
