@@ -523,6 +523,7 @@ void combine_Z(sptSparseTensor * Z, sptIndex nmodes_Z, int tk, sptIndex * ndims_
 			sptFreeSparseTensor(&Z_tmp[tid]);
 		}
 
+	free(Z_tmp);
 	free(Z_tmp_start);
 	return;
 }
