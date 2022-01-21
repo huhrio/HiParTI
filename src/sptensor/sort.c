@@ -1703,7 +1703,7 @@ unsigned int tensor_ht_size;
 int tensor_htCreate(tensor_table_t * t, const unsigned int size){
     t->size = size;
     tensor_ht_size = size;
-    t->list = (tensor_node_t**)malloc(sizeof( node_t*)*size);
+    t->list = (tensor_node_t**)malloc(sizeof(tensor_node_t*)*size);
     unsigned int i;
     for(i=0;i<size;i++)
         t->list[i] = NULL;
