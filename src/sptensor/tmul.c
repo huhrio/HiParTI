@@ -455,7 +455,6 @@ void compute_HtY_HtZ(sptNnzIndexVector * fidx_X, sptIndex nmodes_X, sptIndex nmo
 					sptAppendValueVector(&Z_tmp[tid].values, temp->val);
 					node_t* pre = temp;
 					temp = temp->next;
-					free(pre);
 				}
 			}
 			Z_tmp[tid].nnz += nnz_counter;
