@@ -1754,7 +1754,7 @@ sptValue htGet( table_t *t, unsigned long long key){
 
 void htFree( table_t *t){
     unsigned int i;
-    for(i=0;i<size;i++)
+    for(i=0;i<t->size;i++)
         free(t->list[i]->next);
         free(t->list[i]);
 
@@ -1821,7 +1821,7 @@ tensor_value tensor_htGet( tensor_table_t *t, unsigned long long key){
 
 void tensor_htFree( tensor_table_t *t){
     unsigned int i;
-    for(i=0;i<size;i++)
+    for(i=0;i<t->size;i++)
         free(t->list[i]->next);
         free(t->list[i]);
 
