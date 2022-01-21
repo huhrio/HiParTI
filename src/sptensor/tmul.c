@@ -60,7 +60,7 @@ int sptSparseTensorMulTensor(sptSparseTensor * Z, sptSparseTensor * const X, spt
 		printf("[Processing Input]: %.6f s\n", sptElapsedTime(timer));
 
 		sptStartTimer(timer);
-			compute_CooY_SpZ(&fidx_X, &fidx_Y, nmodes_X, nmodes_Y, num_cmodes, tk, Z_tmp, X, Y);
+			compute_CooY_SpZ(&fidx_X, &fidx_Y, nmodes_X, nmodes_Y, num_cmodes, tk, Z_tmp, X, Y, Y_cmode_inds, Y_fmode_inds);
 			combine_Z(Z, nmodes_Z, tk, ndims_buf, Z_tmp);
 		sptStopTimer(timer);
 		total_time += sptElapsedTime(timer);
@@ -283,7 +283,8 @@ void prepare_Z(sptSparseTensor * const X, sptSparseTensor * const Y,
  * Computation via CooFormat-Y and SparseAccumulator-Z
  */
 void compute_CooY_SpZ(sptNnzIndexVector * fidx_X, sptNnzIndexVector * fidx_Y, sptIndex nmodes_X,
-		sptIndex nmodes_Y, sptIndex num_cmodes, int tk, sptSparseTensor * Z_tmp, sptSparseTensor * const X, sptSparseTensor * const Y)
+		sptIndex nmodes_Y, sptIndex num_cmodes, int tk, sptSparseTensor * Z_tmp, sptSparseTensor * const X, sptSparseTensor * const Y,
+		sptIndex * Y_cmode_inds, sptIndex * Y_fmode_inds)
 {
 	#pragma omp parallel for schedule(static) num_threads(tk) shared(fidx_X, fidx_Y, nmodes_X, nmodes_Y, num_cmodes, Z_tmp)
 		for(sptNnzIndex fx_ptr = 0; fx_ptr < fidx_X->len - 1; ++fx_ptr) { // parallel on X-fibers
