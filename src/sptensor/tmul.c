@@ -401,8 +401,9 @@ void compute_HtY_HtZ(sptNnzIndexVector * fidx_X, sptIndex nmodes_X, sptIndex nmo
 
 			//	allocate hashtable to store intermediate result
 			const unsigned int ht_size = 10000;
-			tensor_table_t ht;
-			tensor_htCreate(&ht, ht_size);
+			tensor_table_t htable;
+			tensor_table_t* ht= &htable;
+			tensor_htCreate(ht, ht_size);
 
 			sptIndex nmodes_spa = nmodes_Y - num_cmodes;
 			long int nnz_counter = 0;
