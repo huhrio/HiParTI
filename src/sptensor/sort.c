@@ -1821,6 +1821,7 @@ tensor_value tensor_htGet( tensor_table_t *t, unsigned long long key){
 
 void tensor_htFree( tensor_table_t *t){
     for(int i=0;i<t->size;i++){
+        tensor_htFreeValueVector(t->list[i]->value);
         free(t->list[i]);
     }      
     free(t->list);
