@@ -39,18 +39,15 @@ int sptSparseTensorMulTensor(sptSparseTensor * Z, sptSparseTensor * const X, spt
 	sptIndex nmodes_Z= nmodes_X + nmodes_Y - 2 * num_cmodes;
 
 	sptNnzIndexVector fidx_X;
-	sptNnzIndexVector fidx_Y;							// CooY 0.1
-	tensor_table_t* Y_ht= tensor_htCreate(Y->nnz);		// HtY	2.3.4
 
 	sptSparseTensor* Z_tmp= (sptSparseTensor*)malloc(tk * sizeof (sptSparseTensor));
 	sptIndex* ndims_buf= (sptIndex*)malloc(nmodes_Z * sizeof(sptIndex));
 
-	sptIndex* Y_cmode_inds= (sptIndex*)malloc((num_cmodes + 1) * sizeof(sptIndex));
-	sptIndex* Y_fmode_inds= (sptIndex*)malloc((nmodes_Y - num_cmodes + 1) * sizeof(sptIndex));
-
 	//	Start Experiment
 		//	0: COOY + SPA
 	if(experiment_modes == 0){
+		sptNnzIndexVector fidx_Y;
+
 		sptStartTimer(timer);
 			process_X(X, nmodes_X, num_cmodes, cmodes_X, tk, &fidx_X);
 			process_CooY(Y, nmodes_Y, num_cmodes, cmodes_Y, tk, &fidx_Y);
@@ -60,7 +57,7 @@ int sptSparseTensorMulTensor(sptSparseTensor * Z, sptSparseTensor * const X, spt
 		printf("[Processing Input]: %.6f s\n", sptElapsedTime(timer));
 
 		sptStartTimer(timer);
-			compute_CooY_SpZ(&fidx_X, &fidx_Y, nmodes_X, nmodes_Y, num_cmodes, tk, Z_tmp, X, Y, Y_cmode_inds, Y_fmode_inds);
+			compute_CooY_SpZ(&fidx_X, &fidx_Y, nmodes_X, nmodes_Y, num_cmodes, tk, Z_tmp, X, Y);
 			combine_Z(Z, nmodes_Z, tk, ndims_buf, Z_tmp);
 		sptStopTimer(timer);
 		total_time += sptElapsedTime(timer);
@@ -77,6 +74,10 @@ int sptSparseTensorMulTensor(sptSparseTensor * Z, sptSparseTensor * const X, spt
 
 		//	3: HTY + HTA
 	if(experiment_modes == 3){
+		tensor_table_t* Y_ht= tensor_htCreate(Y->nnz);
+		sptIndex* Y_cmode_inds= (sptIndex*)malloc((num_cmodes + 1) * sizeof(sptIndex));
+		sptIndex* Y_fmode_inds= (sptIndex*)malloc((nmodes_Y - num_cmodes + 1) * sizeof(sptIndex));
+
 		sptStartTimer(timer);
 			process_X(X, nmodes_X, num_cmodes, cmodes_X, tk, &fidx_X);
 			process_HtY(Y, nmodes_Y, num_cmodes, cmodes_Y, tk, Y_ht, Y_cmode_inds, Y_fmode_inds);
@@ -283,8 +284,7 @@ void prepare_Z(sptSparseTensor * const X, sptSparseTensor * const Y,
  * Computation via CooFormat-Y and SparseAccumulator-Z
  */
 void compute_CooY_SpZ(sptNnzIndexVector * fidx_X, sptNnzIndexVector * fidx_Y, sptIndex nmodes_X,
-		sptIndex nmodes_Y, sptIndex num_cmodes, int tk, sptSparseTensor * Z_tmp, sptSparseTensor * const X, sptSparseTensor * const Y,
-		sptIndex * Y_cmode_inds, sptIndex * Y_fmode_inds)
+		sptIndex nmodes_Y, sptIndex num_cmodes, int tk, sptSparseTensor * Z_tmp, sptSparseTensor * const X, sptSparseTensor * const Y)
 {
 	#pragma omp parallel for schedule(static) num_threads(tk) shared(fidx_X, fidx_Y, nmodes_X, nmodes_Y, num_cmodes, Z_tmp)
 		for(sptNnzIndex fx_ptr = 0; fx_ptr < fidx_X->len - 1; ++fx_ptr) { // parallel on X-fibers
@@ -380,8 +380,6 @@ void compute_CooY_SpZ(sptNnzIndexVector * fidx_X, sptNnzIndexVector * fidx_Y, sp
 
 	sptFreeNnzIndexVector(fidx_X);
 	sptFreeNnzIndexVector(fidx_Y);
-	free(Y_cmode_inds);
-	free(Y_fmode_inds);
 	return;
 }
 
