@@ -1731,11 +1731,12 @@ void htUpdate( table_t *t, unsigned long long key, sptValue val){
 
 void htInsert( table_t *t, unsigned long long key, sptValue val){
     unsigned int pos = htHashCode(key);
+    sptValue tp= val;
      node_t *newNode = ( node_t*)malloc(sizeof( node_t));
      node_t *list = t->list[pos];
      // node_t *temp = list;
     newNode->key = key;
-    newNode->val = val;
+    newNode->val = tp;
     newNode->next = list;
     t->list[pos] = newNode;
 }
