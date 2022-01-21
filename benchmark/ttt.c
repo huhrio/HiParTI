@@ -201,5 +201,8 @@ int main(int argc, char *argv[]) {
     //sptFreeSparseTensor(&X);
     //sptFreeSparseTensor(&Z);
 
+    free(cmodes_X);
+    free(cmodes_Y);
+
     return 0;
 }
