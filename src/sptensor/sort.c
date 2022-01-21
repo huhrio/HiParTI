@@ -1757,9 +1757,6 @@ void htFree( table_t *t){
     node_t *temp = t->list[0];
     node_t *tmp= temp;
     while(temp){
-        if(temp->key==key){
-            return temp->val;
-        }
         tmp= temp;
         temp = temp->next;
         free(tmp);
