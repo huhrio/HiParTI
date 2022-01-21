@@ -513,7 +513,7 @@ void combine_Z(sptSparseTensor * Z, sptIndex nmodes_Z, int tk, sptIndex * ndims_
 				sptAppendValueVectorWithVectorStartFromNuma(&Z->values, &Z_tmp[tid].values, Z_tmp_start[tid]);
 			}
 
-			sptFreeSparseTensor(Z_tmp[tid]);
+			sptFreeSparseTensor(&Z_tmp[tid]);
 		}
 
 	free(Z_tmp);
