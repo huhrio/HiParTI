@@ -40,7 +40,8 @@ int sptSparseTensorMulTensor(sptSparseTensor * Z, sptSparseTensor * const X, spt
 
 	sptNnzIndexVector fidx_X;
 	sptNnzIndexVector fidx_Y;					// CooY 0.1
-	table_t* Y_ht= tensor_htCreate(Y->nnz);		// HtY	2.3.4
+	table_t Y_ht;
+	tensor_htCreate(&Y_ht, Y->nnz);				// HtY	2.3.4
 
 	sptSparseTensor* Z_tmp= (sptSparseTensor*)malloc(tk * sizeof (sptSparseTensor));
 	sptIndex* ndims_buf= (sptIndex*)malloc(nmodes_Z * sizeof(sptIndex));

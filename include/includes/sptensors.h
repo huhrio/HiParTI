@@ -378,7 +378,7 @@ typedef struct{
 
 typedef struct{
     int size;
-     tensor_node_t **list;
+    tensor_node_t **list;
 }tensor_table_t;
 
 int tensor_htNewValueVector(tensor_value *vec, unsigned int len, unsigned int cap);

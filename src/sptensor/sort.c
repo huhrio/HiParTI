@@ -1701,15 +1701,14 @@ sptNnzIndex sptBinarySearch(sptIndex *array, int arrayStart, int arrayEnd, sptIn
 
 unsigned int ht_size;
 //Hash table for SPA
-table_t *htCreate(const unsigned int size){
-    table_t *t = ( table_t*)malloc(sizeof( table_t));
+int htCreate(table_t * t, const unsigned int size){
     t->size = size;
     ht_size = size;
     t->list = ( node_t**)malloc(sizeof( node_t*)*size);
     unsigned int i;
     for(i=0;i<size;i++)
         t->list[i] = NULL;
-    return t;
+    return 0;
 }
 
 unsigned int htHashCode(unsigned long long key){
@@ -1754,29 +1753,24 @@ sptValue htGet( table_t *t, unsigned long long key){
 }
 
 void htFree( table_t *t){
-    node_t *temp = t->list[0];
-    node_t *tmp= temp;
-    while(temp){
-        tmp= temp;
-        temp= temp->next;
-        free(tmp->next);
-        free(tmp);
-    }
-    
+    unsigned int i;
+    for(i=0;i<size;i++)
+        free(t->list[i]->next);
+        free(t->list[i]);
+
+    t->size= 0;
     free(t->list);
-    free(t);
 }
 
 unsigned int tensor_ht_size;
- tensor_table_t *tensor_htCreate(const unsigned int size){
-    tensor_table_t *t = ( tensor_table_t*)malloc(sizeof( tensor_table_t));
+int tensor_htCreate(tensor_table_t * t, const unsigned int size){
     t->size = size;
-    tensor_ht_size = size;
-    t->list = ( tensor_node_t**) malloc(sizeof( tensor_node_t*)*size);
+    ht_size = size;
+    t->list = ( node_t**)malloc(sizeof( node_t*)*size);
     unsigned int i;
     for(i=0;i<size;i++)
         t->list[i] = NULL;
-    return t;
+    return 0;
 }
 
 unsigned int tensor_htHashCode(unsigned long long key){
@@ -1826,8 +1820,13 @@ tensor_value tensor_htGet( tensor_table_t *t, unsigned long long key){
 }
 
 void tensor_htFree( tensor_table_t *t){
+    unsigned int i;
+    for(i=0;i<size;i++)
+        free(t->list[i]->next);
+        free(t->list[i]);
+
+    t->size= 0;
     free(t->list);
-    free(t);
 }
 
 int tensor_htNewValueVector(tensor_value *vec, unsigned int len, unsigned int cap) {
