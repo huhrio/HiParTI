@@ -334,7 +334,6 @@ void compute_CooY_SpZ(sptNnzIndexVector * fidx_X, sptNnzIndexVector * fidx_Y, sp
 					if (fy_begin != -1 || fy_end != -1)
 						break;
 				}
-				sptFreeNnzIndexVector(fidx_Y);
 				sptFreeIndexVector(&cmode_index_X);
 
 				//	if no Y-fiber is found, skip to next X-non_zero
