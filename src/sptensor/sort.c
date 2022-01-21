@@ -1731,13 +1731,12 @@ void htUpdate( table_t *t, unsigned long long key, sptValue val){
 
 void htInsert( table_t *t, unsigned long long key, sptValue val){
     unsigned int pos = htHashCode(key);
-    sptValue tp= val;
      node_t *newNode = ( node_t*)malloc(sizeof( node_t));
-     node_t *list = t->list[pos];
+     node_t *old = t->list[pos];
      // node_t *temp = list;
     newNode->key = key;
-    newNode->val = tp;
-    newNode->next = list;
+    newNode->val = val;
+    newNode->next = old;
     t->list[pos] = newNode;
 }
 
@@ -1755,10 +1754,14 @@ sptValue htGet( table_t *t, unsigned long long key){
 }
 
 void htFree( table_t *t){
+    node_t *tmp;
+    node_t *temp;
     for(int i=0;i<t->size;i++){
-        if (t->list[i] != NULL){
-            free(&(t->list[i]->val));
-            free(t->list[i]);
+        tmp= t->list[i];
+        while (tmp != NULL){
+            temp= tmp->next;
+            free(tmp);
+            tmp= temp;
         }  
     }      
     free(t->list);
