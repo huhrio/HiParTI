@@ -1755,14 +1755,18 @@ sptValue htGet( table_t *t, unsigned long long key){
 
 void htFree( table_t *t){
     for(int i=0;i<t->size;i++){
-        free(t->list[i]);
+        if (t->list[i] != NULL){
+            free(&(t->list[i]->val));
+            free(t->list[i]);
+        }  
     }      
     free(t->list);
     free(t);
 }
 
+
 unsigned int tensor_ht_size;
- tensor_table_t *tensor_htCreate(const unsigned int size){
+tensor_table_t *tensor_htCreate(const unsigned int size){
     tensor_table_t *t = ( tensor_table_t*)malloc(sizeof( tensor_table_t));
     t->size = size;
     tensor_ht_size = size;
