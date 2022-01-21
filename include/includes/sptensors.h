@@ -341,27 +341,6 @@ int sptTTMHiCOO_MatrixTiling(
 /// Binary search
 sptNnzIndex sptBinarySearch(sptIndex *array, int arrayStart, int arrayEnd, sptIndex target);
 
-
-/// Hash table for SPA
-typedef struct{
-    unsigned long long key;
-    sptValue val;
-    struct node_t *next;
-}node_t;
-
-typedef struct{
-    int size;
-    node_t **list;
-}table_t;
-
-int htCreate( table_t *t, const unsigned int size);
-unsigned int htHashCode(unsigned long long key);
-void htUpdate( table_t *t, unsigned long long key, sptValue val);
-void htInsert( table_t *t, unsigned long long key, sptValue val);
-sptValue htGet( table_t *t,unsigned long long key);
-void htFree( table_t *t);
-
-
 /// Hash table for the second tensor
 typedef struct {
     unsigned int    len;        /// length

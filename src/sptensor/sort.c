@@ -1699,69 +1699,6 @@ sptNnzIndex sptBinarySearch(sptIndex *array, int arrayStart, int arrayEnd, sptIn
     return low;
 }
 
-unsigned int ht_size;
-//Hash table for SPA
-int htCreate(table_t * t, const unsigned int size){
-    t->size = size;
-    ht_size = size;
-    t->list = ( node_t**)malloc(sizeof( node_t*)*size);
-    unsigned int i;
-    for(i=0;i<size;i++)
-        t->list[i] = NULL;
-    return 0;
-}
-
-unsigned int htHashCode(unsigned long long key){
-    return key%ht_size;
-}
-
-void htUpdate( table_t *t, unsigned long long key, sptValue val){
-    unsigned int pos = htHashCode(key);
-     node_t *list = t->list[pos];
-     node_t *temp = list;
-    while(temp){
-        if(temp->key==key){
-            temp->val = val;
-            return;
-        }
-        temp = temp->next;
-    }
-}
-
-void htInsert( table_t *t, unsigned long long key, sptValue val){
-    unsigned int pos = htHashCode(key);
-     node_t *newNode = ( node_t*)malloc(sizeof( node_t));
-     node_t *list = t->list[pos];
-     // node_t *temp = list;
-    newNode->key = key;
-    newNode->val = val;
-    newNode->next = list;
-    t->list[pos] = newNode;
-}
-
-sptValue htGet( table_t *t, unsigned long long key){
-    unsigned int pos = htHashCode(key);
-     node_t *list = t->list[pos];
-     node_t *temp = list;
-    while(temp){
-        if(temp->key==key){
-            return temp->val;
-        }
-        temp = temp->next;
-    }
-    return LONG_MIN;
-}
-
-void htFree( table_t *t){
-    unsigned int i;
-    for(i=0;i<t->size;i++)
-        free(t->list[i]->next);
-        free(t->list[i]);
-
-    t->size= 0;
-    free(t->list);
-}
-
 unsigned int tensor_ht_size;
 int tensor_htCreate(tensor_table_t * t, const unsigned int size){
     t->size = size;

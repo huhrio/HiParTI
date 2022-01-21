@@ -40,7 +40,7 @@ int sptSparseTensorMulTensor(sptSparseTensor * Z, sptSparseTensor * const X, spt
 
 	sptNnzIndexVector fidx_X;
 	sptNnzIndexVector fidx_Y;					// CooY 0.1
-	table_t Y_ht;
+	tensor_table_t Y_ht;
 	tensor_htCreate(&Y_ht, Y->nnz);				// HtY	2.3.4
 
 	sptSparseTensor* Z_tmp= (sptSparseTensor*)malloc(tk * sizeof (sptSparseTensor));
@@ -181,7 +181,7 @@ void process_CooY(sptSparseTensor * const Y, sptIndex nmodes_Y, sptIndex num_cmo
  */
 void process_HtY(sptSparseTensor * const Y, sptIndex nmodes_Y, sptIndex num_cmodes,
 		sptIndex * cmodes_Y, int tk,
-		table_t * Y_ht, sptIndex * Y_cmode_inds, sptIndex * Y_fmode_inds)
+		tensor_table_t * Y_ht, sptIndex * Y_cmode_inds, sptIndex * Y_fmode_inds)
 {
 	//	find mode order
 	sptIndex* mode_order_Y = (sptIndex *)malloc(nmodes_Y * sizeof(sptIndex));
@@ -390,7 +390,7 @@ void compute_CooY_SpZ(sptNnzIndexVector * fidx_X, sptNnzIndexVector * fidx_Y, sp
  * Computation via HashTable-Y and HashTable-Z
  */
 void compute_HtY_HtZ(sptNnzIndexVector * fidx_X, sptIndex nmodes_X, sptIndex nmodes_Y, sptIndex num_cmodes,
-		sptIndex * Y_fmode_inds, table_t * Y_ht, sptIndex * Y_cmode_inds, sptSparseTensor * Z_tmp, int tk, sptSparseTensor * const X)
+		sptIndex * Y_fmode_inds, tensor_table_t * Y_ht, sptIndex * Y_cmode_inds, sptSparseTensor * Z_tmp, int tk, sptSparseTensor * const X)
 {
 	#pragma omp parallel for schedule(static) num_threads(tk) shared(fidx_X, nmodes_X, nmodes_Y, num_cmodes, Y_fmode_inds, Y_ht, Y_cmode_inds, Z_tmp)
 		for(sptNnzIndex fx_ptr = 0; fx_ptr < fidx_X->len - 1; ++fx_ptr) { // parallel on X-fibers
@@ -401,8 +401,8 @@ void compute_HtY_HtZ(sptNnzIndexVector * fidx_X, sptIndex nmodes_X, sptIndex nmo
 
 			//	allocate hashtable to store intermediate result
 			const unsigned int ht_size = 10000;
-			table_t ht;
-			htCreate(&ht, ht_size);
+			tensor_table_t ht;
+			tensor_htCreate(&ht, ht_size);
 
 			sptIndex nmodes_spa = nmodes_Y - num_cmodes;
 			long int nnz_counter = 0;
@@ -434,14 +434,14 @@ void compute_HtY_HtZ(sptNnzIndexVector * fidx_X, sptIndex nmodes_X, sptIndex nmo
 				//	(non-parallel) loop through non_zeroes in the HtY entry
 				for(int i = 0; i < my_len; i++){
 					unsigned long long fmode =  Y_val.key_FM[i];
-					sptValue spa_val = htGet(ht, fmode);
+					sptValue spa_val = tensor_htGet(ht, fmode);
 					float result = Y_val.val[i] * valX;
 					if(spa_val == LONG_MIN) {
-						htInsert(ht, fmode, result);
+						tensor_htInsert(ht, fmode, result);
 						nnz_counter++;
 					}
 					else
-						htUpdate(ht, fmode, spa_val + result);
+						tensor_htUpdate(ht, fmode, spa_val + result);
 				}
 			}
 
@@ -466,13 +466,13 @@ void compute_HtY_HtZ(sptNnzIndexVector * fidx_X, sptIndex nmodes_X, sptIndex nmo
 				}
 			}
 
-			htFree(ht);
+			tensor_htFree(ht);
 		}
 
 	sptFreeNnzIndexVector(fidx_X);
 	free(Y_cmode_inds);
 	free(Y_fmode_inds);
-	htFree(Y_ht);
+	tensor_htFree(Y_ht);
 	return;
 }
 
