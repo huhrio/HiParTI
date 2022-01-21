@@ -179,6 +179,11 @@ int main(int argc, char *argv[]) {
         // sptAssert(sptOmpSparseTensorMulMatrix(&Y, &X, &U, mode) == 0);
     }
 
+    free(cmodes_X);
+    free(cmodes_Y);
+    sptFreeSparseTensor(&X);
+    sptFreeSparseTensor(&Y);
+
     // for(int it=0; it<niters; ++it) {
     //     sptFreeSparseTensor(&Z);
     //     if(cuda_dev_id == -2) {
@@ -197,12 +202,11 @@ int main(int argc, char *argv[]) {
         fclose(fZ);
     }
 
+    sptFreeSparseTensor(&Z);
+
     //sptFreeSparseTensor(&Y);
     //sptFreeSparseTensor(&X);
     //sptFreeSparseTensor(&Z);
-
-    free(cmodes_X);
-    free(cmodes_Y);
 
     return 0;
 }

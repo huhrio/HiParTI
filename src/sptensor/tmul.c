@@ -101,6 +101,7 @@ int sptSparseTensorMulTensor(sptSparseTensor * Z, sptSparseTensor * const X, spt
 		printf("[Total time]: %.6f s\n", total_time);
 	}
 
+	sptFreeTimer(timer);
 	return 0;
 }
 
@@ -284,97 +285,99 @@ void prepare_Z(sptSparseTensor * const X, sptSparseTensor * const Y,
 void compute_CooY_SpZ(sptNnzIndexVector * fidx_X, sptNnzIndexVector * fidx_Y, sptIndex nmodes_X,
 		sptIndex nmodes_Y, sptIndex num_cmodes, int tk, sptSparseTensor * Z_tmp, sptSparseTensor * const X, sptSparseTensor * const Y)
 {
-#pragma omp parallel for schedule(static) num_threads(tk) shared(fidx_X, fidx_Y, nmodes_X, nmodes_Y, num_cmodes, Z_tmp)
-	for(sptNnzIndex fx_ptr = 0; fx_ptr < fidx_X->len - 1; ++fx_ptr) { // parallel on X-fibers
-		int tid = omp_get_thread_num();
+	#pragma omp parallel for schedule(static) num_threads(tk) shared(fidx_X, fidx_Y, nmodes_X, nmodes_Y, num_cmodes, Z_tmp)
+		for(sptNnzIndex fx_ptr = 0; fx_ptr < fidx_X->len - 1; ++fx_ptr) { // parallel on X-fibers
+			int tid = omp_get_thread_num();
 
-		sptNnzIndex fx_begin = fidx_X->data[fx_ptr];
-		sptNnzIndex fx_end = fidx_X->data[fx_ptr+1];
+			sptNnzIndex fx_begin = fidx_X->data[fx_ptr];
+			sptNnzIndex fx_end = fidx_X->data[fx_ptr+1];
 
-		//	allocate buffers to read from CooY
-		sptIndex nmodes_spa = nmodes_Y - num_cmodes;
+			//	allocate buffers to read from CooY
+			sptIndex nmodes_spa = nmodes_Y - num_cmodes;
 
-		sptIndexVector * spa_inds = (sptIndexVector*)malloc(nmodes_spa * sizeof(sptIndexVector));
-		sptValueVector spa_vals;
-		for(sptIndex m = 0; m < nmodes_spa; ++m)
-			sptNewIndexVector(&spa_inds[m], 0, 0);
-		sptNewValueVector(&spa_vals, 0, 0);
+			sptIndexVector * spa_inds = (sptIndexVector*)malloc(nmodes_spa * sizeof(sptIndexVector));
+			sptValueVector spa_vals;
+			for(sptIndex m = 0; m < nmodes_spa; ++m)
+				sptNewIndexVector(&spa_inds[m], 0, 0);
+			sptNewValueVector(&spa_vals, 0, 0);
 
-		sptIndexVector inds_buf;
-		sptNewIndexVector(&inds_buf, (nmodes_Y - num_cmodes), (nmodes_Y - num_cmodes));
+			sptIndexVector inds_buf;
+			sptNewIndexVector(&inds_buf, (nmodes_Y - num_cmodes), (nmodes_Y - num_cmodes));
 
-		//	(non-parallel) loop through non_zeroes in the X-fiber
-		for(sptNnzIndex zX = fx_begin; zX < fx_end; ++ zX) {
+			//	(non-parallel) loop through non_zeroes in the X-fiber
+			for(sptNnzIndex zX = fx_begin; zX < fx_end; ++ zX) {
 
-			//	find value and index of the X-non_zero
-			sptValue valX = X->values.data[zX];
-			sptIndexVector cmode_index_X;
-			sptNewIndexVector(&cmode_index_X, num_cmodes, num_cmodes);
-			for(sptIndex i = 0; i < num_cmodes; ++i){
-				 cmode_index_X.data[i] = X->inds[nmodes_X - num_cmodes + i].data[zX];
-			 }
+				//	find value and index of the X-non_zero
+				sptValue valX = X->values.data[zX];
+				sptIndexVector cmode_index_X;
+				sptNewIndexVector(&cmode_index_X, num_cmodes, num_cmodes);
+				for(sptIndex i = 0; i < num_cmodes; ++i){
+					cmode_index_X.data[i] = X->inds[nmodes_X - num_cmodes + i].data[zX];
+				}
 
-			sptNnzIndex fy_begin = -1;
-			sptNnzIndex fy_end = -1;
+				sptNnzIndex fy_begin = -1;
+				sptNnzIndex fy_end = -1;
 
-			//	find the corresponding Y-fiber
-			for(sptIndex j = 0; j < fidx_Y->len; j++){
-				for(sptIndex i = 0; i< num_cmodes; i++){
-					if(cmode_index_X.data[i] != Y->inds[i].data[fidx_Y->data[j]])
+				//	find the corresponding Y-fiber
+				for(sptIndex j = 0; j < fidx_Y->len; j++){
+					for(sptIndex i = 0; i< num_cmodes; i++){
+						if(cmode_index_X.data[i] != Y->inds[i].data[fidx_Y->data[j]])
+							break;
+						if(i == (num_cmodes - 1)){
+							fy_begin = fidx_Y->data[j];
+							fy_end = fidx_Y->data[j+1];
+							break;
+						}
+					}
+					if (fy_begin != -1 || fy_end != -1)
 						break;
-					if(i == (num_cmodes - 1)){
-						fy_begin = fidx_Y->data[j];
-						fy_end = fidx_Y->data[j+1];
-						break;
+				}
+
+				//	if no Y-fiber is found, skip to next X-non_zero
+				if (fy_begin == -1 || fy_end == -1)
+					continue;
+
+				char tmp[32];
+				char index_str[128];
+				long int tmp_key;
+
+				//	(non-parallel) loop through non_zeroes in the Y-fiber
+				for(sptNnzIndex zY = fy_begin; zY < fy_end; ++ zY) {
+					for(sptIndex m = 0; m < nmodes_spa; ++m)
+						inds_buf.data[m] = Y->inds[m + num_cmodes].data[zY];
+					long int found = sptInIndexVector(spa_inds, nmodes_spa, spa_inds[0].len, &inds_buf);
+					if( found == -1) {
+						for(sptIndex m = 0; m < nmodes_spa; ++m)
+							sptAppendIndexVector(&spa_inds[m], Y->inds[m + num_cmodes].data[zY]);
+						sptAppendValueVector(&spa_vals, Y->values.data[zY] * valX);
+					} else {
+						spa_vals.data[found] += Y->values.data[zY] * valX;
 					}
 				}
-				if (fy_begin != -1 || fy_end != -1)
-					break;
+
 			}
 
-			//	if no Y-fiber is found, skip to next X-non_zero
-			if (fy_begin == -1 || fy_end == -1)
-				continue;
+			//	write to local Z_tmp
+			Z_tmp[tid].nnz += spa_vals.len;
 
-			char tmp[32];
-			char index_str[128];
-			long int tmp_key;
-
-			//	(non-parallel) loop through non_zeroes in the Y-fiber
-			for(sptNnzIndex zY = fy_begin; zY < fy_end; ++ zY) {
-				for(sptIndex m = 0; m < nmodes_spa; ++m)
-					inds_buf.data[m] = Y->inds[m + num_cmodes].data[zY];
-				long int found = sptInIndexVector(spa_inds, nmodes_spa, spa_inds[0].len, &inds_buf);
-				if( found == -1) {
-					for(sptIndex m = 0; m < nmodes_spa; ++m)
-						sptAppendIndexVector(&spa_inds[m], Y->inds[m + num_cmodes].data[zY]);
-					sptAppendValueVector(&spa_vals, Y->values.data[zY] * valX);
-				} else {
-					spa_vals.data[found] += Y->values.data[zY] * valX;
+			for(sptIndex i = 0; i < spa_vals.len; ++i) {
+				for(sptIndex m = 0; m < nmodes_X - num_cmodes; ++m) {
+					sptAppendIndexVector(&Z_tmp[tid].inds[m], X->inds[m].data[fx_begin]);
 				}
 			}
+			for(sptIndex m = 0; m < nmodes_spa; ++m)
+				sptAppendIndexVectorWithVector(&Z_tmp[tid].inds[m + (nmodes_X - num_cmodes)], &spa_inds[m]);
+			sptAppendValueVectorWithVector(&Z_tmp[tid].values, &spa_vals);
 
-		}
-
-		//	write to local Z_tmp
-		Z_tmp[tid].nnz += spa_vals.len;
-
-		for(sptIndex i = 0; i < spa_vals.len; ++i) {
-			for(sptIndex m = 0; m < nmodes_X - num_cmodes; ++m) {
-				sptAppendIndexVector(&Z_tmp[tid].inds[m], X->inds[m].data[fx_begin]);
+			//	free buffers
+			for(sptIndex m = 0; m < nmodes_spa; ++m){
+				sptFreeIndexVector(&(spa_inds[m]));
 			}
+			sptFreeValueVector(&spa_vals);
 		}
-		for(sptIndex m = 0; m < nmodes_spa; ++m)
-			sptAppendIndexVectorWithVector(&Z_tmp[tid].inds[m + (nmodes_X - num_cmodes)], &spa_inds[m]);
-		sptAppendValueVectorWithVector(&Z_tmp[tid].values, &spa_vals);
 
-		//	free buffers
-		for(sptIndex m = 0; m < nmodes_spa; ++m){
-			sptFreeIndexVector(&(spa_inds[m]));
-		 }
-		 sptFreeValueVector(&spa_vals);
-	}
-
+	free(Y_cmode_inds);
+	free(Y_fmode_inds);
 	return;
 }
 
@@ -384,81 +387,84 @@ void compute_CooY_SpZ(sptNnzIndexVector * fidx_X, sptNnzIndexVector * fidx_Y, sp
 void compute_HtY_HtZ(sptNnzIndexVector * fidx_X, sptIndex nmodes_X, sptIndex nmodes_Y, sptIndex num_cmodes,
 		sptIndex * Y_fmode_inds, table_t * Y_ht, sptIndex * Y_cmode_inds, sptSparseTensor * Z_tmp, int tk, sptSparseTensor * const X)
 {
-#pragma omp parallel for schedule(static) num_threads(tk) shared(fidx_X, nmodes_X, nmodes_Y, num_cmodes, Y_fmode_inds, Y_ht, Y_cmode_inds, Z_tmp)
-	for(sptNnzIndex fx_ptr = 0; fx_ptr < fidx_X->len - 1; ++fx_ptr) { // parallel on X-fibers
-		int tid = omp_get_thread_num();
+	#pragma omp parallel for schedule(static) num_threads(tk) shared(fidx_X, nmodes_X, nmodes_Y, num_cmodes, Y_fmode_inds, Y_ht, Y_cmode_inds, Z_tmp)
+		for(sptNnzIndex fx_ptr = 0; fx_ptr < fidx_X->len - 1; ++fx_ptr) { // parallel on X-fibers
+			int tid = omp_get_thread_num();
 
-		sptNnzIndex fx_begin = fidx_X->data[fx_ptr];
-		sptNnzIndex fx_end = fidx_X->data[fx_ptr+1];
+			sptNnzIndex fx_begin = fidx_X->data[fx_ptr];
+			sptNnzIndex fx_end = fidx_X->data[fx_ptr+1];
 
-		//	allocate hashtable to store intermediate result
-		const unsigned int ht_size = 10000;
-		table_t *ht;
-		ht = htCreate(ht_size);
+			//	allocate hashtable to store intermediate result
+			const unsigned int ht_size = 10000;
+			table_t *ht;
+			ht = htCreate(ht_size);
 
-		sptIndex nmodes_spa = nmodes_Y - num_cmodes;
-		long int nnz_counter = 0;
-		sptIndex current_idx = 0;
+			sptIndex nmodes_spa = nmodes_Y - num_cmodes;
+			long int nnz_counter = 0;
+			sptIndex current_idx = 0;
 
-		//	(non-parallel) loop through non_zeroes in the X-fiber
-		for(sptNnzIndex zX = fx_begin; zX < fx_end; ++ zX) {
+			//	(non-parallel) loop through non_zeroes in the X-fiber
+			for(sptNnzIndex zX = fx_begin; zX < fx_end; ++ zX) {
 
-			//	find value and index of the X-non_zero
-			sptValue valX = X->values.data[zX];
-			sptIndexVector cmode_index_X;
-			sptNewIndexVector(&cmode_index_X, num_cmodes, num_cmodes);
-			for(sptIndex i = 0; i < num_cmodes; ++i){
-				cmode_index_X.data[i] = X->inds[nmodes_X - num_cmodes + i].data[zX];
-			}
-
-			//	calculate key for HtY
-			unsigned long long key_cmodes = 0;
-			for(sptIndex m = 0; m < num_cmodes; ++m)
-				key_cmodes += cmode_index_X.data[m] * Y_cmode_inds[m + 1];
-
-			tensor_value Y_val = tensor_htGet(Y_ht, key_cmodes);
-			unsigned int my_len = Y_val.len;
-
-			if(my_len == 0) continue;
-
-			//	(non-parallel) loop through non_zeroes in the HtY entry
-			for(int i = 0; i < my_len; i++){
-				unsigned long long fmode =  Y_val.key_FM[i];
-				sptValue spa_val = htGet(ht, fmode);
-				float result = Y_val.val[i] * valX;
-				if(spa_val == LONG_MIN) {
-					htInsert(ht, fmode, result);
-					nnz_counter++;
+				//	find value and index of the X-non_zero
+				sptValue valX = X->values.data[zX];
+				sptIndexVector cmode_index_X;
+				sptNewIndexVector(&cmode_index_X, num_cmodes, num_cmodes);
+				for(sptIndex i = 0; i < num_cmodes; ++i){
+					cmode_index_X.data[i] = X->inds[nmodes_X - num_cmodes + i].data[zX];
 				}
-				else
-					htUpdate(ht, fmode, spa_val + result);
-			}
-		}
 
-		//	write to local Z_tmp
-		for(int i = 0; i < ht->size; i++){
-			node_t *temp = ht->list[i];
-			while(temp){
-				unsigned long long idx_tmp = temp->key;
-				for(sptIndex m = 0; m < nmodes_spa; ++m) {
-					sptAppendIndexVector(&Z_tmp[tid].inds[m + (nmodes_X - num_cmodes)], (idx_tmp%Y_fmode_inds[m])/Y_fmode_inds[m+1]);
+				//	calculate key for HtY
+				unsigned long long key_cmodes = 0;
+				for(sptIndex m = 0; m < num_cmodes; ++m)
+					key_cmodes += cmode_index_X.data[m] * Y_cmode_inds[m + 1];
+
+				tensor_value Y_val = tensor_htGet(Y_ht, key_cmodes);
+				unsigned int my_len = Y_val.len;
+
+				if(my_len == 0) continue;
+
+				//	(non-parallel) loop through non_zeroes in the HtY entry
+				for(int i = 0; i < my_len; i++){
+					unsigned long long fmode =  Y_val.key_FM[i];
+					sptValue spa_val = htGet(ht, fmode);
+					float result = Y_val.val[i] * valX;
+					if(spa_val == LONG_MIN) {
+						htInsert(ht, fmode, result);
+						nnz_counter++;
+					}
+					else
+						htUpdate(ht, fmode, spa_val + result);
 				}
-				sptAppendValueVector(&Z_tmp[tid].values, temp->val);
-				node_t* pre = temp;
-				temp = temp->next;
-				free(pre);
 			}
-		}
-		Z_tmp[tid].nnz += nnz_counter;
-		for(sptIndex i = 0; i < nnz_counter; ++i) {
-			for(sptIndex m = 0; m < nmodes_X - num_cmodes; ++m) {
-				sptAppendIndexVector(&Z_tmp[tid].inds[m], X->inds[m].data[fx_begin]);
+
+			//	write to local Z_tmp
+			for(int i = 0; i < ht->size; i++){
+				node_t *temp = ht->list[i];
+				while(temp){
+					unsigned long long idx_tmp = temp->key;
+					for(sptIndex m = 0; m < nmodes_spa; ++m) {
+						sptAppendIndexVector(&Z_tmp[tid].inds[m + (nmodes_X - num_cmodes)], (idx_tmp%Y_fmode_inds[m])/Y_fmode_inds[m+1]);
+					}
+					sptAppendValueVector(&Z_tmp[tid].values, temp->val);
+					node_t* pre = temp;
+					temp = temp->next;
+					free(pre);
+				}
 			}
+			Z_tmp[tid].nnz += nnz_counter;
+			for(sptIndex i = 0; i < nnz_counter; ++i) {
+				for(sptIndex m = 0; m < nmodes_X - num_cmodes; ++m) {
+					sptAppendIndexVector(&Z_tmp[tid].inds[m], X->inds[m].data[fx_begin]);
+				}
+			}
+
+			htFree(ht);
 		}
 
-		htFree(ht);
-	}
-
+	free(Y_cmode_inds);
+	free(Y_fmode_inds);
+	htFree(Y_ht);
 	return;
 }
 
@@ -495,17 +501,19 @@ void combine_Z(sptSparseTensor * Z, sptIndex nmodes_Z, int tk, sptIndex * ndims_
 		}
 		result = sptNewValueVector(&Z->values, Z_total_size, Z_total_size);
 
-#pragma omp parallel for schedule(static) num_threads(tk) shared(Z, nmodes_Z, Z_tmp_start, Z_tmp)
-	for(int i = 0; i < tk; i++){ // parallel on each Z-tmp
-		int tid = omp_get_thread_num();
+	#pragma omp parallel for schedule(static) num_threads(tk) shared(Z, nmodes_Z, Z_tmp_start, Z_tmp)
+		for(int i = 0; i < tk; i++){ // parallel on each Z-tmp
+			int tid = omp_get_thread_num();
 
-		//	insert to Z if contain non-zero
-		if(Z_tmp[tid].nnz > 0){
-			for(sptIndex m = 0; m < nmodes_Z; ++m)
-				sptAppendIndexVectorWithVectorStartFromNuma(&Z->inds[m], &Z_tmp[tid].inds[m], Z_tmp_start[tid]);
-			sptAppendValueVectorWithVectorStartFromNuma(&Z->values, &Z_tmp[tid].values, Z_tmp_start[tid]);
+			//	insert to Z if contain non-zero
+			if(Z_tmp[tid].nnz > 0){
+				for(sptIndex m = 0; m < nmodes_Z; ++m)
+					sptAppendIndexVectorWithVectorStartFromNuma(&Z->inds[m], &Z_tmp[tid].inds[m], Z_tmp_start[tid]);
+				sptAppendValueVectorWithVectorStartFromNuma(&Z->values, &Z_tmp[tid].values, Z_tmp_start[tid]);
+			}
 		}
-	}
 
+	free(Z_tmp);
+	free(ndims_buf);
 	return;
 }
