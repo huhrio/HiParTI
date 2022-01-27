@@ -376,6 +376,8 @@ void compute_CooY_SpZ(sptNnzIndexVector * fidx_X, sptNnzIndexVector * fidx_Y, sp
 				sptFreeIndexVector(&(spa_inds[m]));
 			}
 			sptFreeValueVector(&spa_vals);
+			free(spa_inds);
+			sptFreeIndexVector(&inds_buf);
 		}
 
 	sptFreeNnzIndexVector(fidx_X);
