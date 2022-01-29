@@ -7,10 +7,10 @@
 
 /** All combined:
  * 0: COOY + SPA
- * 1: COOY + HTA
- * 2: HTY + SPA
+ * 1: COOY + HTA 		(null)
+ * 2: HTY + SPA			(null)
  * 3: HTY + HTA
- * 4: HTY + HTA on HM
+ * 4: HTY + HTA on HM	(null)
  **/
 int sptSparseTensorMulTensor(sptSparseTensor * Z, sptSparseTensor * const X, sptSparseTensor *const Y, sptIndex num_cmodes, sptIndex * cmodes_X, sptIndex * cmodes_Y, int tk, int output_sorting, int placement)
 {
