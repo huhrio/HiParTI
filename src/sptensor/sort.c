@@ -1710,7 +1710,7 @@ table_t *htCreate(const unsigned int size){
     return t;
 }
 
-unsigned int htHashCode(unsigned long long key， unsigned int size){
+unsigned int htHashCode(unsigned long long key, unsigned int size){
     return key%size;
 }
 
@@ -1777,7 +1777,7 @@ tensor_table_t *tensor_htCreate(const unsigned int size){
     return t;
 }
 
-unsigned int tensor_htHashCode(unsigned long long key， unsigned int size){
+unsigned int tensor_htHashCode(unsigned long long key, unsigned int size){
     return key%size;
 }
 
