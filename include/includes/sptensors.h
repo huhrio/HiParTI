@@ -355,7 +355,7 @@ typedef struct{
 }table_t;
 
 table_t *htCreate(const unsigned int size);
-unsigned int htHashCode(unsigned long long key);
+unsigned int htHashCode(unsigned long long key， unsigned int size));
 void htUpdate( table_t *t, unsigned long long key, sptValue val);
 void htInsert( table_t *t, unsigned long long key, sptValue val);
 sptValue htGet( table_t *t,unsigned long long key);
@@ -385,7 +385,7 @@ int tensor_htAppendValueVector(tensor_value *vec, unsigned long long key_FM, spt
 void tensor_htFreeValueVector(tensor_value *vec);
 
 tensor_table_t *tensor_htCreate(const unsigned int size);
-unsigned int tensor_htHashCode(unsigned long long key);
+unsigned int tensor_htHashCode(unsigned long long key， unsigned int size));
 void tensor_htUpdate( tensor_table_t *t, unsigned long long key_cmodes, unsigned long long key_fmodes, sptValue value);
 void tensor_htInsert( tensor_table_t *t, unsigned long long key_cmodes, unsigned long long key_fmodes, sptValue value);
 tensor_value tensor_htGet( tensor_table_t *t,unsigned long long key);
