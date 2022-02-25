@@ -198,7 +198,7 @@ int main(int argc, char *argv[]) {
 
     if(fZ != NULL) {
         sptSparseTensorSortIndex(&Z, 1, 1);
-        //sptAssert(sptDumpSparseTensor(&Z, 0, fZ) == 0);
+        sptAssert(sptDumpSparseTensor(&Z, 0, fZ) == 0);
         fclose(fZ);
     }
 
