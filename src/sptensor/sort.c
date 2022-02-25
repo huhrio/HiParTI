@@ -1789,13 +1789,14 @@ void tensor_htUpdate( tensor_table_t *t, unsigned long long key_cmode,  unsigned
     unsigned int pos = tensor_htHashCode(key_cmode);
      tensor_node_t *list = t->list[pos];
      tensor_node_t *temp = list;
-    while(temp){
-        if(temp->key==key_cmode){
-            tensor_htAppendValueVector(&temp->val, key_fmode, value);  
-            return;
-        }
-        temp = temp->next;
-    }
+    // while(temp){
+    //     if(temp->key==key_cmode){
+    //         tensor_htAppendValueVector(&temp->val, key_fmode, value);  
+    //         return;
+    //     }
+    //     temp = temp->next;
+    // }
+    tensor_htAppendValueVector(&temp->val, key_fmode, value);
 }
 
 void tensor_htInsert(tensor_table_t *t, unsigned long long key_cmodes, unsigned long long key_fmodes, sptValue value){
