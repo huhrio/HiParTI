@@ -228,8 +228,8 @@ void process_HtY(sptSparseTensor * const Y, sptIndex nmodes_Y, sptIndex num_cmod
 			unsigned pos = tensor_htHashCode(key_cmodes);
 			omp_set_lock(&locks[pos]);
 
-			tensor_value Y_val = tensor_htGet(Y_ht, key_cmodes);
-			if(Y_val.len == 0) {
+			//tensor_value Y_val = tensor_htGet(Y_ht, key_cmodes);
+			if(Y_ht->list[pos] == NULL) {
 				tensor_htInsert(Y_ht, key_cmodes, key_fmodes, Y->values.data[i]);
 			}
 			else  {
