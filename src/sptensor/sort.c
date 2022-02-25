@@ -1807,8 +1807,6 @@ void tensor_htInsert(tensor_table_t *t, unsigned long long key_cmodes, unsigned 
     tensor_htAppendValueVector(&my_vec, key_fmodes, value);  
     newNode->val = my_vec;
     unsigned int pos = tensor_htHashCode(key_cmodes);
-    tensor_node_t *list = t->list[pos];
-    newNode->next = list;
     t->list[pos] = newNode;
 }
 
@@ -1816,16 +1814,8 @@ tensor_value tensor_htGet( tensor_table_t *t, unsigned long long key){
     unsigned int pos = tensor_htHashCode(key);
      tensor_node_t *list = t->list[pos];
      tensor_node_t *temp = list;
-
-    while(temp){
-        if(temp->key==key){
-            return temp->val;
-        }
-        temp = temp->next;
-    }
-    tensor_value result;
-    result.len=0;
-    return result;
+    
+    return temp->val;
 }
 
 void tensor_htFree( tensor_table_t *t){

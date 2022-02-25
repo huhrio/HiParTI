@@ -373,7 +373,6 @@ typedef struct {
 typedef struct{
     unsigned long long key;
     tensor_value val;
-    struct tensor_node_t *next;
 }tensor_node_t;
 
 typedef struct{
