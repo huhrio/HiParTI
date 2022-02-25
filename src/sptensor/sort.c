@@ -1699,12 +1699,10 @@ sptNnzIndex sptBinarySearch(sptIndex *array, int arrayStart, int arrayEnd, sptIn
     return low;
 }
 
-unsigned int ht_size;
 //Hash table for SPA
 table_t *htCreate(const unsigned int size){
     table_t *t = ( table_t*)malloc(sizeof( table_t));
     t->size = size;
-    ht_size = size;
     t->list = ( node_t**)malloc(sizeof( node_t*)*size);
     unsigned int i;
     for(i=0;i<size;i++)
@@ -1712,12 +1710,12 @@ table_t *htCreate(const unsigned int size){
     return t;
 }
 
-unsigned int htHashCode(unsigned long long key){
-    return key%ht_size;
+unsigned int htHashCode(unsigned long long key， unsigned int size){
+    return key%size;
 }
 
 void htUpdate( table_t *t, unsigned long long key, sptValue val){
-    unsigned int pos = htHashCode(key);
+    unsigned int pos = htHashCode(key, t->size);
      node_t *list = t->list[pos];
      node_t *temp = list;
     while(temp){
@@ -1730,7 +1728,7 @@ void htUpdate( table_t *t, unsigned long long key, sptValue val){
 }
 
 void htInsert( table_t *t, unsigned long long key, sptValue val){
-    unsigned int pos = htHashCode(key);
+    unsigned int pos = htHashCode(key, t->size);
      node_t *newNode = ( node_t*)malloc(sizeof( node_t));
      node_t *old = t->list[pos];
      // node_t *temp = list;
@@ -1741,7 +1739,7 @@ void htInsert( table_t *t, unsigned long long key, sptValue val){
 }
 
 sptValue htGet( table_t *t, unsigned long long key){
-    unsigned int pos = htHashCode(key);
+    unsigned int pos = htHashCode(key, t->size);
      node_t *list = t->list[pos];
      node_t *temp = list;
     while(temp){
@@ -1769,11 +1767,9 @@ void htFree( table_t *t){
 }
 
 
-unsigned int tensor_ht_size;
 tensor_table_t *tensor_htCreate(const unsigned int size){
     tensor_table_t *t = ( tensor_table_t*)malloc(sizeof( tensor_table_t));
     t->size = size;
-    tensor_ht_size = size;
     t->list = ( tensor_node_t**) malloc(sizeof( tensor_node_t*)*size);
     unsigned int i;
     for(i=0;i<size;i++)
@@ -1781,21 +1777,14 @@ tensor_table_t *tensor_htCreate(const unsigned int size){
     return t;
 }
 
-unsigned int tensor_htHashCode(unsigned long long key){
-    return key%tensor_ht_size;
+unsigned int tensor_htHashCode(unsigned long long key， unsigned int size){
+    return key%size;
 }
 
 void tensor_htUpdate( tensor_table_t *t, unsigned long long key_cmode,  unsigned long long key_fmode, sptValue value){
-    unsigned int pos = tensor_htHashCode(key_cmode);
+    unsigned int pos = tensor_htHashCode(key_cmode, t->size);
      tensor_node_t *list = t->list[pos];
      tensor_node_t *temp = list;
-    // while(temp){
-    //     if(temp->key==key_cmode){
-    //         tensor_htAppendValueVector(&temp->val, key_fmode, value);  
-    //         return;
-    //     }
-    //     temp = temp->next;
-    // }
     tensor_htAppendValueVector(&temp->val, key_fmode, value);
 }
 
@@ -1806,12 +1795,12 @@ void tensor_htInsert(tensor_table_t *t, unsigned long long key_cmodes, unsigned 
     tensor_htNewValueVector(&my_vec, 0, 0);
     tensor_htAppendValueVector(&my_vec, key_fmodes, value);  
     newNode->val = my_vec;
-    unsigned int pos = tensor_htHashCode(key_cmodes);
+    unsigned int pos = tensor_htHashCode(key_cmodes, t->size);
     t->list[pos] = newNode;
 }
 
 tensor_value tensor_htGet( tensor_table_t *t, unsigned long long key){
-    unsigned int pos = tensor_htHashCode(key);
+    unsigned int pos = tensor_htHashCode(key, t->size);
      tensor_node_t *list = t->list[pos];
      tensor_node_t *temp = list;
     
